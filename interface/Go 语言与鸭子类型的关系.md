@@ -78,7 +78,11 @@ Hi, I am PHP!
 
 # 参考资料
 【wikipedia】https://en.wikipedia.org/wiki/Duck_test
+
 【Golang 与鸭子类型，讲得比较好】https://blog.csdn.net/cszhouwei/article/details/33741731
+
 【各种面向对象的名词】https://cyent.github.io/golang/other/oo/
+
 【多态、鸭子类型特性】https://www.jb51.net/article/116025.htm
+
 【鸭子类型、动态静态语言】https://www.jianshu.com/p/650485b78d11
