@@ -95,11 +95,11 @@ w = r.(io.Writer)
 
 之所以用断言，而不能直接赋值，是因为 `r` 的静态类型是 `io.Reader`，并没有实现 `io.Writer` 接口。断言能否成功，看 `r` 的动态类型是否符合要求。
 
-这样，w 也可以表示成 `<tty, *os.File>`，仅管它和 `w` 一样，但是 w 可调用的函数取决于它的静态类型 `io.Writer`，也就是说它只能有这样的调用形式： `w.Write()` 。`w` 的内存形式如下图：
+这样，w 也可以表示成 `<tty, *os.File>`，仅管它和 `r` 一样，但是 w 可调用的函数取决于它的静态类型 `io.Writer`，也就是说它只能有这样的调用形式： `w.Write()` 。`w` 的内存形式如下图：
 
-![w = r.(io.Writer)](https://user-images.githubusercontent.com/7698088/56844534-4884b680-68e4-11e9-8be5-63b342e4447b.png)
+![w = r.(io.Writer)](https://user-images.githubusercontent.com/7698088/57341967-09215a00-716f-11e9-99cc-cfaa0f312b54.png)
 
-和 `w` 相比，仅仅是 `fun` 对应的函数变了：`Read -> Write`。
+和 `r` 相比，仅仅是 `fun` 对应的函数变了：`Read -> Write`。
 
 最后，再来一个赋值：
 
