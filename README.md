@@ -13,7 +13,7 @@
 |博客名|评论|地址|
 |---|---|---|
 |码农桃花源|本项目作者博客|https://www.cnblogs.com/qcrao-2018/|
-|No Headback|滴滴技术大神|http://xargin.com/|
+|No Headback|滴滴技术大神曹春晖|http://xargin.com/|
 |面向信仰编程|给 kubernetes 提交 pull 的大神|https://draveness.me/|
 
 
