@@ -175,6 +175,8 @@ func makemap(t *maptype, hint int64, h *hmap, bucket unsafe.Pointer) *hmap {
 }
 ```
 
+【引申1】slice 和 map 分别作为函数参数时有什么区别？
+
 注意，这个函数返回的结果：`*hmap`，它是一个指针，而我们之前讲过的 `makeslice` 函数返回的是 `Slice` 结构体：
 
 ```golang
