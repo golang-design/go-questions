@@ -32,8 +32,8 @@ func main() {
 Len，cap 的转换流程如下：
 
 ```golang
-Len: &s => pointer => uintptr => poiter => *int => int
-Cap: &s => pointer => uintptr => poiter => *int => int
+Len: &s => pointer => uintptr => pointer => *int => int
+Cap: &s => pointer => uintptr => pointer => *int => int
 ```
 
 # 获取 map 长度
