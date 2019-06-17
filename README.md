@@ -15,6 +15,7 @@
 |码农桃花源|本项目作者博客|https://www.cnblogs.com/qcrao-2018/|
 |No Headback|滴滴技术大神曹春晖|http://xargin.com/|
 |面向信仰编程|给 kubernetes 提交 pull 的大神|https://draveness.me/|
+|煎鱼的迷之博客|知其然，知其所以然|https://github.com/EDDYCJY/blog|
 
 
 # 学习交流
