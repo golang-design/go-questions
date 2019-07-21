@@ -219,3 +219,6 @@ toStop := make(chan string, NumReceivers + NumSenders)
 以及更本质的原则：
 
 > don't close (or send values to) closed channels.
+
+# 参考资料
+https://go101.org/article/channel-closing.html
