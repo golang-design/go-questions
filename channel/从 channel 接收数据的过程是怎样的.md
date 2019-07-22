@@ -354,3 +354,5 @@ G2 也是同样的遭遇。现在 G1 和 G2 都被挂起了，等待着一个 se
 
 # 参考资料
 【深入 channel 底层】https://codeburst.io/diving-deep-into-the-golang-channels-549fd4ed21a8
+
+【Kavya在Gopher Con 上关于 channel 的设计，非常好】https://speakerd.s3.amazonaws.com/presentations/10ac0b1d76a6463aa98ad6a9dec917a7/GopherCon_v10.0.pdf
