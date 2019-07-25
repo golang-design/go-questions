@@ -3,6 +3,8 @@
 
 - 电子书地址：https://qcrao91.gitbook.io/go/
 
+- 个人博客地址：https://qcrao.github.io/
+
 `Go 语言`学习入门和进阶知识。以 `Go 语言`为突破口，从问题切入，掌握 Go 语言、后端相关的各种硬核知识。希望本项目能在职场表现、项目实战上助你一臂之力！
 
 # 项目目录
@@ -14,7 +16,7 @@
 
 |博客名|简介|地址|
 |---|---|---|
-|码农桃花源|本项目作者博客|https://www.cnblogs.com/qcrao-2018/|
+|码农桃花源|本项目作者博客园|https://www.cnblogs.com/qcrao-2018/|
 |No Headback|滴滴技术大神曹春晖|http://xargin.com/|
 |面向信仰编程|给 kubernetes 提交 pull 的大神|https://draveness.me/|
 |煎鱼的迷之博客|知其然，知其所以然|https://github.com/EDDYCJY/blog|
