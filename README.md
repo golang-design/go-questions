@@ -3,7 +3,7 @@
 
 - 电子书地址：https://qcrao91.gitbook.io/go/
 
-- 个人博客地址：https://qcrao.github.io/
+- 个人博客地址：https://www.qcrao.com/
 
 `Go 语言`学习入门和进阶知识。以 `Go 语言`为突破口，从问题切入，掌握 Go 语言、后端相关的各种硬核知识。希望本项目能在职场表现、项目实战上助你一臂之力！
 
