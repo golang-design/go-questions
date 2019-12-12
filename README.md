@@ -17,6 +17,7 @@
 |博客名|简介|地址|
 |---|---|---|
 |码农桃花源|本项目作者博客园|https://www.cnblogs.com/qcrao-2018|
+|欧神开源书《Go 语言原本》|Golang committers|https://changkun.de/golang/|
 |No Headback|滴滴技术大神曹春晖|http://xargin.com|
 |面向信仰编程|给 kubernetes 提交 pr 的大神|https://draveness.me|
 |煎鱼的迷之博客|知其然，知其所以然|https://github.com/EDDYCJY/blog|
