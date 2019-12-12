@@ -1,4 +1,4 @@
-从语法上看，是可以的。Go 语言中只要是可比较的类型都可以作为 key。除开 slice，map，functions 这几种类型，其他类型都是 OK 的。具体包括：布尔值、数字、字符串、指针、通道、接口类型、结构体、只包含上述类型的数组。这些类型的共同特征是支持 `==` 和 `!=` 操作符，`k1 == k2` 时，可认为 k1 和 k2 是同一个 key。如果是结构体，则需要它们的字段值都相等，才被认为是相同的 key。
+从语法上看，是可以的。Go 语言中只要是可比较的类型都可以作为 key。除开 slice，map，functions 这几种类型，其他类型都是 OK 的。具体包括：布尔值、数字、字符串、指针、通道、接口类型、结构体、只包含上述类型的数组。这些类型的共同特征是支持 `==` 和 `!=` 操作符，`k1 == k2` 时，可认为 k1 和 k2 是同一个 key。如果是结构体，只有 hash 后的值相等以及字面值相等，才被认为是相同的 key。很多字面值相等的，hash出来的值不一定相等，比如引用。
 
 顺便说一句，任何类型都可以作为 value，包括 map 类型。
 
@@ -155,3 +155,34 @@ hash(NAN) != hash(NAN)
 因此向 map 中查找的 key 为 NAN 时，什么也查不到；如果向其中增加了 4 次 NAN，遍历会得到 4 个 NAN。
 
 最后说结论：float 型可以作为 key，但是由于精度的问题，会导致一些诡异的问题，慎用之。
+
+---
+
+关于当 key 是引用类型时，判断两个 key 是否相等，需要 hash 后的值相等并且 key 的字面量相等。由 @WuMingyu 补充的例子：
+
+```go
+func TestT(t *testing.T) {
+	type S struct {
+		ID	int
+	}
+	s1 := S{ID: 1}
+	s2 := S{ID: 1}
+
+	var h = map[*S]int {}
+	h[&s1] = 1
+	t.Log(h[&s1])
+	t.Log(h[&s2])
+	t.Log(s1 == s2)
+}
+```
+test output:
+```shell
+=== RUN   TestT
+--- PASS: TestT (0.00s)
+    endpoint_test.go:74: 1
+    endpoint_test.go:75: 0
+    endpoint_test.go:76: true
+PASS
+
+Process finished with exit code 0
+```
