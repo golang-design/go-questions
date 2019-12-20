@@ -99,7 +99,7 @@ func main() {
 
 在 Go 中，由于 goroutine 的存在，所谓的内存泄漏除了附着在长期对象上之外，还存在多种不同的形式。
 
-- **形式1：预期能被快速释放的内存因被根对象引用而没有得到迅速释放。**
+### 形式1：预期能被快速释放的内存因被根对象引用而没有得到迅速释放
 
 当有一个全局对象时，可能不经意间将某个变量附着在其上，且忽略的将其进行释放，则该内存永远不会得到释放。例如：
 
@@ -113,7 +113,7 @@ func main() {
 }
 ```
 
-- **形式2：goroutine 泄漏。** 
+### 形式2：goroutine 泄漏
 
 Goroutine 作为一种逻辑上理解的轻量级线程，需要维护用户代码的执行上下文信息。因此，它在运行过程中也需要消耗一定的内存来保存这类信息。而这些内存在目前版本（Go 1.14）的 Go 中是不会被释放的。因此，如果一个程序持续不断的产生新的 goroutine、且不结束执行已经创建的 goroutine 并复用这部分内存，就会造成内存泄漏的现象，例如：
 
@@ -125,7 +125,9 @@ import (
 )
 
 func main() {
-    trace.Start(os.Stderr)
+    f, _ := os.Create("trace.out")
+    defer f.Close()
+    trace.Start(f)
     defer trace.Stop()
     for i := 0; i < 100000; i++ {
         go func() {
@@ -135,11 +137,23 @@ func main() {
 }
 ```
 
+然后运行程序：
+
 ```shell
-go run main.go 2> trace.out
+go run main.go
 ```
 
+会看到程序中生成了 `trace.out` 文件，我们可以使用 
+
+```
+go tool trace trace.out
+```
+
+命令观察到下图：
+
 ![](./assets/gc-leak.png)
+
+可以看到，途中的 Heap 在持续增长，没有内存被回收，产生了内存泄漏的现象。
 
 这种形式的 goroutine 泄漏还可能由 channel 泄漏导致。channel 的泄漏本质上与 goroutine 泄漏存在直接联系。channel 作为一种同步原语，会连接两个不同的 goroutine，如果一个 goroutine 尝试向一个没有接收方的无缓冲 channel 发送消息，则该 goroutine 会被永久的休眠，整个 goroutine 及其执行栈都得不到释放。
 
@@ -246,14 +260,16 @@ Go 语言中对 GC 的触发时机存在两种形式：
 求解这两个优化问题的具体数学建模过程我们不在此做深入讨论，有兴趣的读者可以参考两个设计文档：[Go 1.5 concurrent garbage collector pacing](https://docs.google.com/document/d/1wmjrocXIWTr1JxU-3EQBI6BK6KgtiFArkG47XK73xIQ/edit#) 和 [Separate soft and hard heap size goal](https://github.com/golang/proposal/blob/master/design/14951-soft-heap-limit.md)。但计算 $H_T$ 的最终结论（从 Go 1.10 时开始）是：
 
 - 设第 n 次触发 GC 时，估计得到的堆增长率为 $h_T^{(n)}$、运行过程中的实际堆增长率为 $h_a^{(n)}$、标记辅助花费的时间 $t_A$，用户设置的增长率为 $\rho = \text{GOGC}/100$（ $\rho > 0$）则第 $n+1$ 次出触发 GC 时候，估计的堆增长率为：
-       $$
-       h_T^{(n+1)} = h_T^{(n)} + 0.5 \left[ \rho - h_T^{(n)} - \frac{0.25 t_A^{(n)}}{0.3} \left( h_a^{(n)} - h_T^{(n)} \right) \right]
-       $$
+
+$$
+h_T^{(n+1)} = h_T^{(n)} + 0.5 \left[ \rho - h_T^{(n)} - \frac{0.25 t_A^{(n)}}{0.3} \left( h_a^{(n)} - h_T^{(n)} \right) \right]
+$$
 
 - 特别的，当 $n=0$ 时，标记辅助的时间 $t_A = 0$，且令 $h_t^{(0)} = 0.875$，即第一次触发 GC 时：
-       $$
-       h_T^{(1)} = \frac{1}{2}\left[ \frac{7}{8} + \rho \right]
-       $$
+
+$$
+h_T^{(1)} = \frac{1}{2}\left[ \frac{7}{8} + \rho \right]
+$$
 
 - 当 $h_T<0.6$时，将其调整为 $0.6$，当 $h_T > 0.95 \rho$ 时，将其设置为 $0.95 \rho$
 
@@ -305,23 +321,25 @@ go tool trace trace.out
 
 ![gc-trigger](https://user-images.githubusercontent.com/7698088/71048007-a9654580-2178-11ea-979d-c781d9e52ee7.png)
 
-便能发现，根据 Heap 数值上升的阶梯状来看，当进行第 16 次阶梯式上升（内存分配）时，此时已经在堆中分配了 3948544 / (1025 * 1024) 约等于 3.76 MB，符合理论上计算的 15 * 0.25MB = 3.75MB，时，GC开始被触发。
+从图中可以观察到，根据 Heap 数值上升的阶梯状来看，当进行第 16 次阶梯式上升（内存分配）时，此时已经在堆中分配了 3948544 byte / (1024 * 1024) 约等于 3.76 MB，符合理论上计算的 15 * 0.25MB = 3.75MB，时，GC开始被触发。
 
-我们再来根据调试信息验证一下下一个GC触发时的堆大小：
+我们再来根据调试信息验证一下下一个 GC 触发时的堆大小：
 
 - 首先，从记录中可以看到，标记辅助所消耗的时间为 $t_A = 354017/(4*68182) \approx 1.3$
 
 ![gc-trigger2](https://user-images.githubusercontent.com/7698088/71048084-05c86500-2179-11ea-9bd6-f7debeec86a8.png)
 
-- 运行过程中的实际堆增长率为 $h_a^{(1)} = (3948544-3936000)/3936000 = 0.0031$
+- 从图中可以观察到，运行过程中的实际堆增长率为 $h_a^{(1)} = (3948544-3936000)/3936000 = 0.0031$
 
 - 根据第一次 GC 得到的结果，估计得到的堆增长率为 
-         $$
-         h_T^{(2)} = h_T^{(1)} + 0.5 \left[ 1 - h_T^{(1)} - \frac{0.25 \times 1.3}{0.3} \left(0.0031 - h_T^{(1)}\right) \right] = 0.9375 + 0.5 (1 - 0.9375 - 1.083(0.0031 - 0.9375)) \approx 1.4747
-         $$
-         数值超过 0.95，因此最终的 $h_T^{(2)} = 0.95$，则再次触发 GC 时的堆大小为 0.95*4MB = 3.8 MB。
 
-- 根据实际所记录的数据 4022528/(1024*1024)约等于 3.83MB，符合理论计算结果。
+$$
+h_T^{(2)} = h_T^{(1)} + 0.5 \left[ 1 - h_T^{(1)} - \frac{0.25 \times 1.3}{0.3} \left(0.0031 - h_T^{(1)}\right) \right] = 0.9375 + 0.5 (1 - 0.9375 - 1.083(0.0031 - 0.9375)) \approx 1.4747
+$$
+
+数值超过 0.95，因此最终的 $h_T^{(2)} = 0.95$，则再次触发 GC 时的堆大小为 0.95*4MB = 3.8 MB。
+
+- 根据实际所记录的数据，在开始触发 GC 前的分配量为 4022528 byte，即 4022528/(1024*1024) 约等于 3.83MB，符合理论计算结果。
 
 ![gc-trigger3](https://user-images.githubusercontent.com/7698088/71048066-f8ab7600-2178-11ea-9ab8-9db5358efea0.png)
 
@@ -387,11 +405,11 @@ TODO:
 
 在 Go 中存在数量极少的与 GC 相关的 API，它们是
 
-- runtime.GC
-- debug.FreeOSMemory
-- debug.ReadGCStats
-- debug.SetGCPercent
-- debug.SetMaxHeap（尚未发布）
+- runtime.GC：手动触发 GC
+- debug.FreeOSMemory：手动将内存归还给操作系统
+- debug.ReadGCStats：读取关于 GC 的相关统计信息
+- debug.SetGCPercent：设置 GOGC 调步变量
+- debug.SetMaxHeap（尚未发布）：设置 Go 程序堆的上限值
 
 # GC 的历史及演进
 
@@ -512,4 +530,7 @@ Java 的 GC 称之为 G1，并将整个堆分为年轻代、老年代和永久�
 ### 性能比较
 
 在 Go、Java 和 V8 JavaScript 之间比较 GC 的性能本质上是一个不切实际的问题。如前面所说，垃圾回收器的设计权衡了相当多方面的因素，除此之外同时还受语言自身设计的影响，因为语言的设计也直接影响了程序员编写代码的形式，也就自然影响了产生垃圾的方式。
-但总的来说，他们三者对垃圾回收的实现都需要 STW，并均已达到了用户代码几乎无法感知到的状态（小于一毫秒）。当然，随着 STW 的减少，垃圾回收器会增加 CPU 的使用率，这也是程序员在编写代码时需要手动进行优化的部分，即充分考虑内存分配的必要性，减少过多申请内存带给垃圾回收器的压力。
+但总的来说，他们三者对垃圾回收的实现都需要 STW，并均已达到了用户代码几乎无法感知到的状态（根 GC 作者 Austin 宣称 [STW 小于 100 微妙](https://groups.google.com/d/msg/golang-dev/Ab1sFeoZg_8/_DaL0E8fAwAJ)）。当然，随着 STW 的减少，垃圾回收器会增加 CPU 的使用率，这也是程序员在编写代码时需要手动进行优化的部分，即充分考虑内存分配的必要性，减少过多申请内存带给垃圾回收器的压力。
+
+## 20. 目前 Go 语言的 GC 还存在哪些问题？
+
