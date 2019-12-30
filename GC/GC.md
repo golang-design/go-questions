@@ -47,15 +47,15 @@
 
 ## 4. 三色标记法是什么？
 
-理解`三色标记法`的关键是理解对象的`三色抽象`以及`波面（wavefront）推进`这一概念。`三色抽象`只是一种描述追踪式回收器的方法，在实践中并没有实际含义，它的重要作用在于从逻辑上严密推导标记清理这种垃圾回收方法的正确性，也就是说，当我们谈及三色标记法时，通常指标记清扫的垃圾回收。
+理解**三色标记法**的关键是理解对象的**三色抽象**以及**波面（wavefront）推进**这两个概念。三色抽象只是一种描述追踪式回收器的方法，在实践中并没有实际含义，它的重要作用在于从逻辑上严密推导标记清理这种垃圾回收方法的正确性，也就是说，当我们谈及三色标记法时，通常指标记清扫的垃圾回收。
 
-从垃圾回收器的视角来看，`三色抽象`规定了三种不同类型的对象，并用不同的颜色相称：
+从垃圾回收器的视角来看，三色抽象规定了三种不同类型的对象，并用不同的颜色相称：
 
 - 白色对象（可能死亡）：未被回收器访问到的对象。在回收开始阶段，所有对象均为白色，当回收结束后，白色对象均不可达。
 - 灰色对象（波面）：已被回收器访问到的对象，但回收器需要对其中的一个或多个指针进行扫描，因为他们可能还指向白色对象。
 - 黑色对象（确定存活）：已被回收器访问到的对象，其中所有字段都已扫描，黑色对象中任何一个指针都不可能直接指向白色对象。
 
-这样三种不变性所定义的回收过程其实是一个`波面`不断前进的过程，这个波面同时也是黑色对象和白色对象的边界，灰色对象就是这个波面。
+这样三种不变性所定义的回收过程其实是一个**波面**不断前进的过程，这个波面同时也是黑色对象和白色对象的边界，灰色对象就是这个波面。
 
 当垃圾回收开始时，只有白色对象。当标记过程开始进行时，灰色对象开始出现（着色），这时候波面便开始扩大。当一个对象的所有子节点均完成扫描时，会被着色为黑色。当整个堆遍历完成时，只剩下黑色和白色对象，这时的黑色对象为可达对象，即存活；而白色对象为不可达对象，即死亡。这个过程可以视为以灰色对象为波面，将黑色对象和白色对象分离，使波面不断向前推进，直到所有可达的灰色对象都变为黑色对象为止的过程。如下图所示：
 
@@ -208,6 +208,8 @@ func keepalloc3() {
 总而言之，并发标记清除中面临的一个根本问题就是如何保证标记与清除过程的正确性。
 
 ## 8. 什么是写屏障、混合写屏障，如何实现？
+
+TODO: detail review here
 
 要讲清楚写屏障，就需要理解三色标记清扫算法中的强弱不变性以及赋值器的颜色。
 
@@ -398,7 +400,18 @@ $$
 
 目前的 Go 实现中，当 GC 触发后，会首先进入并发标记的阶段。并发标记会设置一个标志，并在 mallocgc 调用进行检查。当存在新的内存分配时，会暂停分配内存过快的那些 goroutine，并将其转去执行一些辅助标记（Mark Assist）的工作，从而达到放缓继续分配、辅助 GC 的标记工作的目的。
 
-TODO: 实现思路的伪代码
+编译器会分析用户代码，并在需要分配内存的位置，将申请内存的操作翻译为 `mallocgc` 调用，而 `mallocgc` 的实现决定了标记辅助的实现，其伪代码思路如下：
+
+```go
+func mallocgc(t typ.Type, size uint64) {
+	if enableMarkAssist {
+		// 进行标记辅助，此时用户代码没有得到执行
+		(...)
+	}
+	// 执行内存分配
+	(...)
+}
+```
 
 # GC 的优化问题
 
@@ -763,11 +776,102 @@ Java 的 GC 称之为 G1，并将整个堆分为年轻代、老年代和永久�
 
 ### 1. Sweep Assist 停顿时间过长
 
-TODO:
+```go
+package main
 
-### 2. Mark Termination 停顿时间过长
+import (
+	"fmt"
+	"os"
+	"runtime"
+	"runtime/trace"
+	"time"
+)
 
-TODO:
+const (
+	windowSize = 200000
+	msgCount   = 1000000
+)
+
+var (
+	best    time.Duration = time.Second
+	bestAt  time.Time
+	worst   time.Duration
+	worstAt time.Time
+
+	start = time.Now()
+)
+
+func main() {
+	f, _ := os.Create("trace.out")
+	defer f.Close()
+	trace.Start(f)
+	defer trace.Stop()
+
+	for i := 0; i < 5; i++ {
+		measure()
+		worst = 0
+		best = time.Second
+		runtime.GC()
+	}
+}
+
+func measure() {
+	var c channel
+	for i := 0; i < msgCount; i++ {
+		c.sendMsg(i)
+	}
+	fmt.Printf("Best send delay %v at %v, worst send delay: %v at %v. Wall clock: %v \n", best, bestAt.Sub(start), worst, worstAt.Sub(start), time.Since(start))
+}
+
+type channel [windowSize][]byte
+
+func (c *channel) sendMsg(id int) {
+	start := time.Now()
+
+	// 模拟发送
+	(*c)[id%windowSize] = newMsg(id)
+
+	end := time.Now()
+	elapsed := end.Sub(start)
+	if elapsed > worst {
+		worst = elapsed
+		worstAt = end
+	}
+	if elapsed < best {
+		best = elapsed
+		bestAt = end
+	}
+}
+
+func newMsg(n int) []byte {
+	m := make([]byte, 1024)
+	for i := range m {
+		m[i] = byte(n)
+	}
+	return m
+}
+```
+
+通过运行此程序我们可以得到类似下面的结果：
+
+```
+$ go1.14 run main.go
+
+Best send delay 330ns at 773.037956ms, worst send delay: 7.127915ms at 579.835487ms. Wall clock: 831.066632ms 
+Best send delay 331ns at 873.672966ms, worst send delay: 6.731947ms at 1.023969626s. Wall clock: 1.515295559s 
+Best send delay 330ns at 1.812141567s, worst send delay: 5.34028ms at 2.193858359s. Wall clock: 2.199921749s 
+Best send delay 338ns at 2.722161771s, worst send delay: 7.479482ms at 2.665355216s. Wall clock: 2.920174197s 
+Best send delay 337ns at 3.173649445s, worst send delay: 6.989577ms at 3.361716121s. Wall clock: 3.615079348s 
+```
+![](./assets/gc-mark-assist.png)
+
+在这个结果中，第一次的最坏延迟时间高达 7.12 毫秒，发生在程序运行 578 毫秒左右。通过 `go tool trace` 可以发现，这个时间段中，Mark Assist 执行了 7112312ns，约为 7.127915ms；可见，此时最坏情况下，标记辅助拖慢了用户代码的执行，是造成 7 毫秒延迟的原因。
+
+### 2. Sweep 停顿时间过长
+
+同样还是刚才的例子，如果我们仔细观察 Mark Assist 后发生的 Sweep 阶段，竟然对用户代码的影响长达约 30ms，根据调用栈信息可以看到，该 Sweep 过程发生在内存分配阶段：
+
+![](./assets/gc-mark-sweep.png)
 
 ### 3. 由于 GC 算法的不正确性导致 GC 周期被迫重新执行
 
@@ -833,7 +937,7 @@ TODO:
 
 TODO:
 
-## 总结
+# 总结
 
 GC 是一个复杂的系统工程，本文讨论的二十个问题尽管已经展现了一个相对全面的 Go GC。
 但它们仍然只是 GC 这一宏观问题的一些较为重要的部分，还有非常多的细枝末节、研究进展
