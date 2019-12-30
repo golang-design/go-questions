@@ -26,12 +26,9 @@
 所有的 GC 算法其存在形式可以归结为追踪（Tracing）和引用计数（Reference Counting）这两种形式的混合运用。
 
 - 追踪式 GC 
-
-核心思想：从根对象出发，根据对象之间的引用信息，一步步推进直到扫描完毕整个堆、并确定需要保留的对象，从而回收所有可以回收的对象。例如 Go、 Java、V8 对 JavaScript 的实现等均为追踪式 GC。
-
+  + 核心思想：从根对象出发，根据对象之间的引用信息，一步步推进直到扫描完毕整个堆、并确定需要保留的对象，从而回收所有可以回收的对象。例如 Go、 Java、V8 对 JavaScript 的实现等均为追踪式 GC。
 - 引用计数式 GC
-
-核心思相想：每个对象自身包含一个被引用的计数器，当计数器归零时自动得到回收。因为此方法缺陷较多，在追求高性能时通常不被应用，例如：Python、Objective-C 等均为引用计数式 GC。
+  + 核心思相想：每个对象自身包含一个被引用的计数器，当计数器归零时自动得到回收。因为此方法缺陷较多，在追求高性能时通常不被应用，例如：Python、Objective-C 等均为引用计数式 GC。
 
 目前比较常见的 GC 实现方式包括：
 
@@ -43,7 +40,10 @@
   - 分代式：将对象根据存活时间的长短进行分类，存活时间小于某个值的为年轻代，存活时间大于某个值的为老年代，永远不会参与回收的对象为永久代。并根据分代假设（如果一个对象存活时间不长则倾向于被回收，如果一个对象已经存活很长时间则倾向于存活更长时间）对对象进行回收。
 - 引用计数：根据对象自身的引用的计数来回收，当引用数归零时立即回收。
 
-关于各类方法的详细介绍及其实现不在本文中详细讨论。对于 Go 而言，Go 的 GC 目前使用的是无分代（对象没有代际之分）、不整理（回收过程中不对对象进行移动与整理）、并发（与用户代码并发执行）的三色标记清扫算法。
+关于各类方法的详细介绍及其实现不在本文中详细讨论。对于 Go 而言，Go 的 GC 目前使用的是无分代（对象没有代际之分）、不整理（回收过程中不对对象进行移动与整理）、并发（与用户代码并发执行）的三色标记清扫算法。[原因](https://groups.google.com/d/msg/golang-nuts/KJiyv2mV2pU/wdBUH1mHCAAJ)在于：
+
+1. 对象整理的优势是解决顺序分配器产生的内存碎片问题，但 Go 运行时的分配算法基于 tcmalloc，在多线程环境下，对对象进行整理不会带来实质性的性能提升。
+2. 分代 GC 依赖分代假设，即 GC 将主要的回收目标放在新创建的对象上，而非频繁检查所有对象。但 Go 的编译器会将大部分新生对象存储在栈上（栈直接被回收），并利用逃逸分析直接将对象分配到堆中，因为需要逃逸的对象通常是那些需要长期存在的对象，当 goroutine 死亡后栈也会被直接回收，进而分代假设并没有带来直接优势。除此之外，由于 Go 的垃圾回收器与用户代码并发执行，从而 STW 与对象的代际没有关系，并着重优化如何更好的让 GC 与用户代码并发执行（即使用适当的 CPU 来执行垃圾回收），而非关注在减少停顿时间这一单一目标上。
 
 ## 4. 三色标记法是什么？
 
@@ -396,42 +396,206 @@ $$
 
 ## 11. 如果内存分配速度超过了标记清除的速度怎么办？是怎么实现的？
 
-目前的 Go 实现中，当 GC 触发后，会首先进入并发标记的阶段。并发标记会设置一个标志，并在 mallocgc 调用进行检查。当存在新的内存分配时，会暂停分配内存过快的那些 goroutine，并将其转去执行一些辅助标记的工作（Mark Assist），从而达到放缓继续分配、辅助 GC 的标记工作的目的。
+目前的 Go 实现中，当 GC 触发后，会首先进入并发标记的阶段。并发标记会设置一个标志，并在 mallocgc 调用进行检查。当存在新的内存分配时，会暂停分配内存过快的那些 goroutine，并将其转去执行一些辅助标记（Mark Assist）的工作，从而达到放缓继续分配、辅助 GC 的标记工作的目的。
+
+TODO: 实现思路的伪代码
 
 # GC 的优化问题
 
 ## 12. 如何观察 Go GC？
 
-观察 Go 的 GC 目前由四种不同的方式：
+我们以下面的程序为例，先使用四种不同的方式来介绍如何观察 GC，
+并在后面的问题中通过几个详细的例子再来讨论如何优化 GC。
+
+```go
+package main
+
+func allocate() {
+	_ = make([]byte, 1<<20)
+}
+
+func main() {
+	for n := 1; n < 100000; n++ {
+		allocate()
+	}
+}
+```
 
 ### 方式1：`GODEBUG=gctrace=1`
 
-TODO:
+我们首先可以通过
 
-### 方式2：`debug.ReadGCStats`
+```
+$ go1.14 build -o main
+$ GODEBUG=gctrace=1 ./main
 
-TODO:
+gc 1 @0.000s 2%: 0.009+0.23+0.004 ms clock, 0.11+0.083/0.019/0.14+0.049 ms cpu, 4->6->2 MB, 5 MB goal, 12 P
+scvg: 8 KB released
+scvg: inuse: 3, idle: 60, sys: 63, released: 57, consumed: 6 (MB)
+gc 2 @0.001s 2%: 0.018+1.1+0.029 ms clock, 0.22+0.047/0.074/0.048+0.34 ms cpu, 4->7->3 MB, 5 MB goal, 12 P
+scvg: inuse: 3, idle: 60, sys: 63, released: 56, consumed: 7 (MB)
+gc 3 @0.003s 2%: 0.018+0.59+0.011 ms clock, 0.22+0.073/0.008/0.042+0.13 ms cpu, 5->6->1 MB, 6 MB goal, 12 P
+scvg: 8 KB released
+scvg: inuse: 2, idle: 61, sys: 63, released: 56, consumed: 7 (MB)
+gc 4 @0.003s 4%: 0.019+0.70+0.054 ms clock, 0.23+0.051/0.047/0.085+0.65 ms cpu, 4->6->2 MB, 5 MB goal, 12 P
+scvg: 8 KB released
+scvg: inuse: 3, idle: 60, sys: 63, released: 56, consumed: 7 (MB)
+scvg: 8 KB released
+scvg: inuse: 4, idle: 59, sys: 63, released: 56, consumed: 7 (MB)
+gc 5 @0.004s 12%: 0.021+0.26+0.49 ms clock, 0.26+0.046/0.037/0.11+5.8 ms cpu, 4->7->3 MB, 5 MB goal, 12 P
+scvg: inuse: 5, idle: 58, sys: 63, released: 56, consumed: 7 (MB)
+gc 6 @0.005s 12%: 0.020+0.17+0.004 ms clock, 0.25+0.080/0.070/0.053+0.051 ms cpu, 5->6->1 MB, 6 MB goal, 12 P
+scvg: 8 KB released
+scvg: inuse: 1, idle: 62, sys: 63, released: 56, consumed: 7 (MB)
+```
 
-### 方式3：`runtime.ReadMemStats`
+在这个日志中可以观察到两类不同的信息：
 
-TODO:
+```
+gc 1 @0.000s 2%: 0.009+0.23+0.004 ms clock, 0.11+0.083/0.019/0.14+0.049 ms cpu, 4->6->2 MB, 5 MB goal, 12 P
+gc 2 @0.001s 2%: 0.018+1.1+0.029 ms clock, 0.22+0.047/0.074/0.048+0.34 ms cpu, 4->7->3 MB, 5 MB goal, 12 P
+...
+```
 
-### 方式4：`go tool trace`
+以及 
 
-TODO:
+```
+scvg: 8 KB released
+scvg: inuse: 3, idle: 60, sys: 63, released: 57, consumed: 6 (MB)
+scvg: inuse: 3, idle: 60, sys: 63, released: 56, consumed: 7 (MB)
+...
+```
+
+TODO: 介绍字段含义
+
+### 方式2：`go tool trace`
+
+此方式我们在前面的问题中已经使用过了，它的主要功能是将统计而来的信息以一种可视化的方式
+展示给用户。要使用此方式，可以通过调用 trace API：
+
+```go
+package main
+
+func main() {
+	f, _ := os.Create("trace.out")
+	defer f.Close()
+	trace.Start(f)
+	defer trace.Stop()
+	(...)
+}
+```
+
+并通过 
+
+```
+$ go tool trace trace.out
+2019/12/30 15:50:33 Parsing trace...
+2019/12/30 15:50:38 Splitting trace...
+2019/12/30 15:50:45 Opening browser. Trace viewer is listening on http://127.0.0.1:51839
+```
+
+命令来启动可视化界面：
+
+![](./assets/gc-trace.png)
+
+选择第一个链接可以获得如下图示：
+
+![](assets/gc-trace2.png)
+
+右上角的问号可以打开帮助菜单，主要使用方式包括：
+
+- w/s 键可以用于放大或者缩小视图
+- a/d 键可以用户左右移动
+
+### 方式3：`debug.ReadGCStats`
+
+此方式可以通过代码的方式来直接实现对感兴趣指标的监控，例如我们希望每隔一秒钟监控一次
+GC 的状态：
+
+```go
+func printGCStats() {
+	t := time.NewTicker(time.Second)
+	s := debug.GCStats{}
+	for {
+		select {
+		case <-t.C:
+			debug.ReadGCStats(&s)
+			fmt.Printf("gc %d last@%v, PauseTotal %v\n", s.NumGC, s.LastGC, s.PauseTotal)
+		}
+	}
+}
+func main() {
+	go printGCStats()
+	(...)
+}
+```
+
+我们能够看到如下输出：
+
+```go
+$ go run main.go
+
+gc 4954 last@2019-12-30 15:19:37.505575 +0100 CET, PauseTotal 29.901171ms
+gc 9195 last@2019-12-30 15:19:38.50565 +0100 CET, PauseTotal 77.579622ms
+gc 13502 last@2019-12-30 15:19:39.505714 +0100 CET, PauseTotal 128.022307ms
+gc 17555 last@2019-12-30 15:19:40.505579 +0100 CET, PauseTotal 182.816528ms
+gc 21838 last@2019-12-30 15:19:41.505595 +0100 CET, PauseTotal 246.618502ms
+```
+
+### 方式4：`runtime.ReadMemStats`
+
+除了使用 debug 包提供的方法外，还可以直接通过运行时的内存相关的 API 进行监控：
+
+```go
+func printMemStats() {
+	t := time.NewTicker(time.Second)
+	s := runtime.MemStats{}
+
+	for {
+		select {
+		case <-t.C:
+			runtime.ReadMemStats(&s)
+			fmt.Printf("gc %d last@%v, next_heap_size@%vMB\n", s.NumGC, time.Unix(int64(time.Duration(s.LastGC).Seconds()), 0), s.NextGC/(1<<20))
+		}
+	}
+}
+func main() {
+	go printMemStats()
+	(...)
+}
+```
+
+```go
+$ go run main.go
+
+gc 4887 last@2019-12-30 15:44:56 +0100 CET, next_heap_size@4MB
+gc 10049 last@2019-12-30 15:44:57 +0100 CET, next_heap_size@4MB
+gc 15231 last@2019-12-30 15:44:58 +0100 CET, next_heap_size@4MB
+gc 20378 last@2019-12-30 15:44:59 +0100 CET, next_heap_size@6MB
+```
+
+当然，后两种方式能够监控的指标很多，读者可以自行查看 [`debug.GCStats`](https://golang.org/pkg/runtime/debug/#GCStats) 和 
+[`runtime.MemStats`](https://golang.org/pkg/runtime/#MemStats) 的字段，这里不再赘述。
 
 ## 13. GC 关注的指标有哪些？
 
 Go 中的 GC 被设计为成比例触发、大部分工作与赋值器并发、不分代、无内存移动且会主动向操作系统归还申请的内存。因此最主要关注的能够影响赋值器的性能指标有：
 
 - CPU 利用率：回收算法会在多大程度上拖慢程序？有时候，这个是通过回收占用的 CPU 时间与其它 CPU 时间的百分比来描述的。
-- GC 停顿时间：回收器会造成多长时间的停顿？
-- GC 停顿频率：回收器造成的停顿频率是怎样的？
-- GC 可扩展性：当堆内存变大时，垃圾回收器的性能如何？
+- GC 停顿时间：回收器会造成多长时间的停顿？目前的 GC 中需要考虑 STW 和 Mark Assist 两个部分可能造成的停顿。
+- GC 停顿频率：回收器造成的停顿频率是怎样的？目前的 GC 中需要考虑 STW 和 Mark Assist 两个部分可能造成的停顿。
+- GC 可扩展性：当堆内存变大时，垃圾回收器的性能如何？但大部分的程序可能并不一定关心这个问题。
 
 ## 14. Go 的 GC 如何调优？
 
-所谓 GC 调优的核心思想是：优化内存的申请速度，尽可能的少申请内存，复用已申请的内存（例如 sync.Pool）。Go 自身提供的调试工具（go tool pprof 与 go tool trace）能够快速帮助我们定位存在大量内存申请的位置。
+GC 的调优是在特定场景下产生的，并非所有程序都需要针对 GC 进行调优，只有那些对执行延迟非常敏感、
+当 GC 的开销成为程序性能瓶颈的程序，才需要针对 GC 进行性能调优。总的来说，有以下几种情况：
+
+1. 对时间敏感的流式应用：GC 产生的长时间停顿，导致需要立即执行的用户代码执行滞后
+2. 需要频繁对同一类对象进行内存分配的应用：频繁分配内存增加 GC 的工作量，影响用户代码的对 CPU 的利用率
+
+所谓 GC 调优的核心思想是：优化内存的申请速度，尽可能的少申请内存，复用已申请的内存（例如 sync.Pool）。通过我们前面介绍的四种观察 GC 的方式，能够快速帮助我们定位存在大量内存申请的位置。
+我们将通过三个实际例子，并主要使用第两种（即 `go tool pprof` 和 `go tool trace`）方式来介绍如何定位 GC 的存在的问题，并一步一步进行性能调优。
 
 ### 例1
 
@@ -520,11 +684,16 @@ TODO:
 
 ### 并发栈重扫
 
-TODO
+正如我们前面所说，允许灰色赋值器存在的垃圾回收器需要引入重扫过程来保证算法的正确性，
+除了引入混合屏障来消除重扫这一过程外，有另一种做法可以提高重扫过程的性能，那就是将重扫
+的过程并发执行。然而这一[方案](https://github.com/golang/proposal/blob/master/design/17505-concurrent-rescan.md)并没有得以实现，原因很简单：实现过程相比引入混合屏障而言十分复杂，
+而且引入混合屏障能够消除重扫这一过程将简化垃圾回收的步骤。
 
 ### ROC
 
-TODO
+ROC 的全称叫面向请求的收集器（Request Oriented Collector）。
+
+TODO:
 
 ## 18. 目前提供 GC 的语言以及不提供 GC 的语言有哪些？GC 和 No GC 各自的优缺点是什么？
 
@@ -585,23 +754,24 @@ Java 的 GC 称之为 G1，并将整个堆分为年轻代、老年代和永久�
 在 Go、Java 和 V8 JavaScript 之间比较 GC 的性能本质上是一个不切实际的问题。如前面所说，垃圾回收器的设计权衡了相当多方面的因素，除此之外同时还受语言自身设计的影响，因为语言的设计也直接影响了程序员编写代码的形式，也就自然影响了产生垃圾的方式。
 但总的来说，他们三者对垃圾回收的实现都需要 STW，并均已达到了用户代码几乎无法感知到的状态（根 GC 作者 Austin 宣称 [STW 小于 100 微秒](https://groups.google.com/d/msg/golang-dev/Ab1sFeoZg_8/_DaL0E8fAwAJ)）。当然，随着 STW 的减少，垃圾回收器会增加 CPU 的使用率，这也是程序员在编写代码时需要手动进行优化的部分，即充分考虑内存分配的必要性，减少过多申请内存带给垃圾回收器的压力。
 
-## 20. 目前 Go 语言的 GC 还存在哪些问题？
+## 20. 目前 Go 语言的 GC 还存在哪些问题？他们有哪些暂时性的变通方法？
 
-尽管 STW 停顿时间得以优化到 100 微秒级别，但这本质上是一种取舍。原本的 STW 某种意义上
-来说其实转移到了可能导致用户代码停顿的几个位置；除此之外，由于运行时调度器的实现方式，同样
-对 GC 存在一定程度的影响。目前（Go 1.14）Go 中的 GC 仍然存在以下问题：
+尽管 Go 团队宣称 STW 停顿时间得以优化到 100 微秒级别，但这本质上是一种取舍。
+原本的 STW 某种意义上来说其实转移到了可能导致用户代码停顿的几个位置；
+除此之外，由于运行时调度器的实现方式，同样对 GC 存在一定程度的影响。
+目前（Go 1.14）Go 中的 GC 仍然存在以下问题：
 
 ### 1. Sweep Assist 停顿时间过长
 
-TODO
+TODO:
 
 ### 2. Mark Termination 停顿时间过长
 
-TODO
+TODO:
 
 ### 3. 由于 GC 算法的不正确性导致 GC 周期被迫重新执行
 
-TODO
+TODO:
 
 ### 4. 创建大量 Goroutine 后导致 GC 消耗更多的 CPU
 
@@ -654,3 +824,19 @@ GCLargeGs/#g-1000000-12  32.5ms ± 4%
 这种情况通常发生于峰值流量后，大量 goroutine 由于任务等待被休眠，从而运行时不断创建新的 goroutine，
 旧的 goroutine 由于休眠未被销毁且得不到复用，导致 GC 需要扫描的执行栈越来越多，进而完成 GC 所需的时间越来越长。
 一个解决办法是使用 Goroutine 池来限制创建的 goroutine 数量。
+
+### 5. 当堆较小时，GC 可能导致内存页抖动
+
+TODO:
+
+### 6. 结构体的对齐要求导致内存浪费，从而增加 GC 的开销
+
+TODO:
+
+## 总结
+
+GC 是一个复杂的系统工程，本文讨论的二十个问题尽管已经展现了一个相对全面的 Go GC。
+但它们仍然只是 GC 这一宏观问题的一些较为重要的部分，还有非常多的细枝末节、研究进展
+无法在有限的篇幅内完整讨论。
+从 Go 诞生之初，Go 团队就一直在对 GC 的表现进行实验与优化，但仍然有诸多未解决的问题，
+我们不妨对 GC 未来的改进拭目以待。

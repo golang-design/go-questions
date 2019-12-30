@@ -1,0 +1,20 @@
+$ GODEBUG=gctrace=1 ./main
+
+gc 1 @0.000s 2%: 0.009+0.23+0.004 ms clock, 0.11+0.083/0.019/0.14+0.049 ms cpu, 4->6->2 MB, 5 MB goal, 12 P
+scvg: 8 KB released
+scvg: inuse: 3, idle: 60, sys: 63, released: 57, consumed: 6 (MB)
+gc 2 @0.001s 2%: 0.018+1.1+0.029 ms clock, 0.22+0.047/0.074/0.048+0.34 ms cpu, 4->7->3 MB, 5 MB goal, 12 P
+scvg: inuse: 3, idle: 60, sys: 63, released: 56, consumed: 7 (MB)
+gc 3 @0.003s 2%: 0.018+0.59+0.011 ms clock, 0.22+0.073/0.008/0.042+0.13 ms cpu, 5->6->1 MB, 6 MB goal, 12 P
+scvg: 8 KB released
+scvg: inuse: 2, idle: 61, sys: 63, released: 56, consumed: 7 (MB)
+gc 4 @0.003s 4%: 0.019+0.70+0.054 ms clock, 0.23+0.051/0.047/0.085+0.65 ms cpu, 4->6->2 MB, 5 MB goal, 12 P
+scvg: 8 KB released
+scvg: inuse: 3, idle: 60, sys: 63, released: 56, consumed: 7 (MB)
+scvg: 8 KB released
+scvg: inuse: 4, idle: 59, sys: 63, released: 56, consumed: 7 (MB)
+gc 5 @0.004s 12%: 0.021+0.26+0.49 ms clock, 0.26+0.046/0.037/0.11+5.8 ms cpu, 4->7->3 MB, 5 MB goal, 12 P
+scvg: inuse: 5, idle: 58, sys: 63, released: 56, consumed: 7 (MB)
+gc 6 @0.005s 12%: 0.020+0.17+0.004 ms clock, 0.25+0.080/0.070/0.053+0.051 ms cpu, 5->6->1 MB, 6 MB goal, 12 P
+scvg: 8 KB released
+scvg: inuse: 5, idle: 58, sys: 63, released: 56, consumed: 7
