@@ -559,7 +559,73 @@ Java 的 GC 称之为 G1，并将整个堆分为年轻代、老年代和永久�
 ### 性能比较
 
 在 Go、Java 和 V8 JavaScript 之间比较 GC 的性能本质上是一个不切实际的问题。如前面所说，垃圾回收器的设计权衡了相当多方面的因素，除此之外同时还受语言自身设计的影响，因为语言的设计也直接影响了程序员编写代码的形式，也就自然影响了产生垃圾的方式。
-但总的来说，他们三者对垃圾回收的实现都需要 STW，并均已达到了用户代码几乎无法感知到的状态（根 GC 作者 Austin 宣称 [STW 小于 100 微妙](https://groups.google.com/d/msg/golang-dev/Ab1sFeoZg_8/_DaL0E8fAwAJ)）。当然，随着 STW 的减少，垃圾回收器会增加 CPU 的使用率，这也是程序员在编写代码时需要手动进行优化的部分，即充分考虑内存分配的必要性，减少过多申请内存带给垃圾回收器的压力。
+但总的来说，他们三者对垃圾回收的实现都需要 STW，并均已达到了用户代码几乎无法感知到的状态（根 GC 作者 Austin 宣称 [STW 小于 100 微秒](https://groups.google.com/d/msg/golang-dev/Ab1sFeoZg_8/_DaL0E8fAwAJ)）。当然，随着 STW 的减少，垃圾回收器会增加 CPU 的使用率，这也是程序员在编写代码时需要手动进行优化的部分，即充分考虑内存分配的必要性，减少过多申请内存带给垃圾回收器的压力。
 
 ## 20. 目前 Go 语言的 GC 还存在哪些问题？
 
+尽管 STW 停顿时间得以优化到 100 微秒级别，但这本质上是一种取舍。原本的 STW 某种意义上
+来说其实转移到了可能导致用户代码停顿的几个位置。目前（Go 1.14）Go 中的 GC 仍然存在以下问题：
+
+### 1. Sweep Assist 停顿时间过长
+
+TODO
+
+### 2. Mark Termination 停顿时间过长
+
+TODO
+
+### 3. 由于 GC 算法的不正确性导致 GC 周期被迫重新执行
+
+TODO
+
+### 4. 创建大量 Goroutine 后导致 GC 消耗更多的 CPU
+
+这个问题可以通过以下程序进行验证：
+
+```go
+func BenchmarkGCLargeGs(b *testing.B) {
+	wg := sync.WaitGroup{}
+
+	for ng := 100; ng <= 1000000; ng *= 10 {
+		b.Run(fmt.Sprintf("#g-%d", ng), func(b *testing.B) {
+			// 创建大量 goroutine，由于每次创建的 goroutine 会休眠
+			// 从而运行时不会复用正在休眠的 goroutine，进而不断创建新的 g
+			wg.Add(ng)
+			for i := 0; i < ng; i++ {
+				go func() {
+					time.Sleep(100 * time.Millisecond)
+					wg.Done()
+				}()
+			}
+			wg.Wait()
+
+			// 现运行一次 GC 来提供一致的内存环境
+			runtime.GC()
+
+			// 记录运行 b.N 次 GC 需要的时间
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				runtime.GC()
+			}
+		})
+
+	}
+}
+```
+
+其结果可以通过如下指令来获得：
+
+```shell
+$ go1.14 test -bench=BenchmarkGCLargeGs -run=^$ -count=5 -v . | tee 4.txt
+$ benchstat 4.txt
+name                     time/op
+GCLargeGs/#g-100-12       192µs ± 5%
+GCLargeGs/#g-1000-12      331µs ± 1%
+GCLargeGs/#g-10000-12    1.22ms ± 1%
+GCLargeGs/#g-100000-12   10.9ms ± 3%
+GCLargeGs/#g-1000000-12  32.5ms ± 4%
+```
+
+这种情况通常发生于峰值流量后，大量 goroutine 由于任务等待被休眠，从而运行时不断创建新的 goroutine，
+旧的 goroutine 由于休眠未被销毁且得不到复用，导致 GC 需要扫描的执行栈越来越多，进而完成 GC 所需的时间越来越长。
+一个解决办法是使用 Goroutine 池来限制创建的 goroutine 数量。

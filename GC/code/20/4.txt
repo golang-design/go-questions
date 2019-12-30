@@ -1,0 +1,35 @@
+goos: darwin
+goarch: amd64
+BenchmarkGCLargeGs
+BenchmarkGCLargeGs/#g-100
+BenchmarkGCLargeGs/#g-100-12         	    6670	    181526 ns/op
+BenchmarkGCLargeGs/#g-100-12         	    6050	    188918 ns/op
+BenchmarkGCLargeGs/#g-100-12         	    6156	    195642 ns/op
+BenchmarkGCLargeGs/#g-100-12         	    6067	    197367 ns/op
+BenchmarkGCLargeGs/#g-100-12         	    6164	    194289 ns/op
+BenchmarkGCLargeGs/#g-1000
+BenchmarkGCLargeGs/#g-1000-12        	    3544	    328971 ns/op
+BenchmarkGCLargeGs/#g-1000-12        	    3628	    331038 ns/op
+BenchmarkGCLargeGs/#g-1000-12        	    3621	    332077 ns/op
+BenchmarkGCLargeGs/#g-1000-12        	    3603	    332605 ns/op
+BenchmarkGCLargeGs/#g-1000-12        	    3477	    332496 ns/op
+BenchmarkGCLargeGs/#g-10000
+BenchmarkGCLargeGs/#g-10000-12       	     939	   1211196 ns/op
+BenchmarkGCLargeGs/#g-10000-12       	     927	   1228460 ns/op
+BenchmarkGCLargeGs/#g-10000-12       	     925	   1211521 ns/op
+BenchmarkGCLargeGs/#g-10000-12       	     920	   1227664 ns/op
+BenchmarkGCLargeGs/#g-10000-12       	     906	   1232928 ns/op
+BenchmarkGCLargeGs/#g-100000
+BenchmarkGCLargeGs/#g-100000-12      	     100	  11134261 ns/op
+BenchmarkGCLargeGs/#g-100000-12      	     108	  10581869 ns/op
+BenchmarkGCLargeGs/#g-100000-12      	     110	  11042436 ns/op
+BenchmarkGCLargeGs/#g-100000-12      	     100	  10828657 ns/op
+BenchmarkGCLargeGs/#g-100000-12      	     100	  10927736 ns/op
+BenchmarkGCLargeGs/#g-1000000
+BenchmarkGCLargeGs/#g-1000000-12     	      42	  31126262 ns/op
+BenchmarkGCLargeGs/#g-1000000-12     	      33	  32082860 ns/op
+BenchmarkGCLargeGs/#g-1000000-12     	      33	  33453187 ns/op
+BenchmarkGCLargeGs/#g-1000000-12     	      34	  32805587 ns/op
+BenchmarkGCLargeGs/#g-1000000-12     	      34	  32812612 ns/op
+PASS
+ok  	_/Users/changkun/dev/Go-Questions/GC/code/20	55.959s
