@@ -104,12 +104,13 @@ func main() {
 当有一个全局对象时，可能不经意间将某个变量附着在其上，且忽略的将其进行释放，则该内存永远不会得到释放。例如：
 
 ```go
-var cache map[interface{}]interface{}
-func main() {
-  for i := 0; i < 100000; i++ {
-    m := make([]byte, 1<<10)
-    cache[i] = m
-  }
+var cache = map[interface{}]interface{}{}
+
+func keepalloc() {
+	for i := 0; i < 10000; i++ {
+		m := make([]byte, 1<<10)
+		cache[i] = m
+	}
 }
 ```
 
@@ -118,22 +119,34 @@ func main() {
 Goroutine 作为一种逻辑上理解的轻量级线程，需要维护用户代码的执行上下文信息。因此，它在运行过程中也需要消耗一定的内存来保存这类信息。而这些内存在目前版本（Go 1.14）的 Go 中是不会被释放的。因此，如果一个程序持续不断的产生新的 goroutine、且不结束执行已经创建的 goroutine 并复用这部分内存，就会造成内存泄漏的现象，例如：
 
 ```go
+func keepalloc2() {
+	for i := 0; i < 100000; i++ {
+		go func() {
+			select {}
+		}()
+	}
+}
+```
+
+### 验证
+
+我们可以通过如下形式来调用上述两个函数：
+
+```go
 package main
+
 import (
-    "os"
-    "runtime/trace"
+	"os"
+	"runtime/trace"
 )
 
 func main() {
-    f, _ := os.Create("trace.out")
-    defer f.Close()
-    trace.Start(f)
-    defer trace.Stop()
-    for i := 0; i < 100000; i++ {
-        go func() {
-            select{}
-        }()
-    }
+	f, _ := os.Create("trace.out")
+	defer f.Close()
+	trace.Start(f)
+	defer trace.Stop()
+	keepalloc()
+	keepalloc2()
 }
 ```
 
@@ -143,19 +156,29 @@ func main() {
 go run main.go
 ```
 
-会看到程序中生成了 `trace.out` 文件，我们可以使用 
-
-```
-go tool trace trace.out
-```
-
+会看到程序中生成了 `trace.out` 文件，我们可以使用 `go tool trace trace.out`
 命令观察到下图：
 
-![](./assets/gc-leak.png)
+![](./assets/gc-leak1.png)
 
 可以看到，途中的 Heap 在持续增长，没有内存被回收，产生了内存泄漏的现象。
 
-这种形式的 goroutine 泄漏还可能由 channel 泄漏导致。channel 的泄漏本质上与 goroutine 泄漏存在直接联系。channel 作为一种同步原语，会连接两个不同的 goroutine，如果一个 goroutine 尝试向一个没有接收方的无缓冲 channel 发送消息，则该 goroutine 会被永久的休眠，整个 goroutine 及其执行栈都得不到释放。
+值得一提的是，这种形式的 goroutine 泄漏还可能由 channel 泄漏导致。
+而 channel 的泄漏本质上与 goroutine 泄漏存在直接联系。
+channel 作为一种同步原语，会连接两个不同的 goroutine，
+如果一个 goroutine 尝试向一个没有接收方的无缓冲 channel 发送消息，
+则该 goroutine 会被永久的休眠，整个 goroutine 及其执行栈都得不到释放，例如：
+
+```go
+var ch = make(chan struct{})
+
+func keepalloc3() {
+	for i := 0; i < 100000; i++ {
+		// 没有接收方，goroutine 会一直阻塞
+		go func() { ch <- struct{}{} }()
+	}
+}
+```
 
 ## 7. 并发标记清除法的难点是什么？
 
@@ -466,8 +489,6 @@ TODO:
 
   - ![https://twitter.com/brianhatfield/status/804355831080751104/photo/1](./assets/6.jpeg)
 
-    ​          
-
 - Go 1.9：彻底移除了栈的重扫描过程
 
   - 消除栈重扫，与 1.8.3 几乎一致 ![https://twitter.com/brianhatfield/status/900473287750365184/photo/1](./assets/7.jpeg)
@@ -564,7 +585,8 @@ Java 的 GC 称之为 G1，并将整个堆分为年轻代、老年代和永久�
 ## 20. 目前 Go 语言的 GC 还存在哪些问题？
 
 尽管 STW 停顿时间得以优化到 100 微秒级别，但这本质上是一种取舍。原本的 STW 某种意义上
-来说其实转移到了可能导致用户代码停顿的几个位置。目前（Go 1.14）Go 中的 GC 仍然存在以下问题：
+来说其实转移到了可能导致用户代码停顿的几个位置；除此之外，由于运行时调度器的实现方式，同样
+对 GC 存在一定程度的影响。目前（Go 1.14）Go 中的 GC 仍然存在以下问题：
 
 ### 1. Sweep Assist 停顿时间过长
 
