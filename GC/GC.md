@@ -486,7 +486,7 @@ _不应出现对象的丢失，也不应错误的回收还不需要回收的对�
 
 ```go
 // 灰色赋值器 Dijkstra 插入屏障
-func DijkstraWritePointer(slot, ptr unsafe.Pointer) {
+func DijkstraWritePointer(slot *unsafe.Pointer, ptr unsafe.Pointer) {
     shade(ptr)
     *slot = ptr
 }
@@ -504,7 +504,7 @@ Dijkstra 插入屏障的好处在于可以立刻开始并发标记，但由于�
 
 ```go
 // 黑色赋值器 Yuasa 屏障
-func YuasaWritePointer(slot, ptr unsafe.Pointer) {
+func YuasaWritePointer(slot *unsafe.Pointer, ptr unsafe.Pointer) {
     shade(*slot)
     *slot = ptr
 }
@@ -516,35 +516,26 @@ Yuasa 删除屏障的优势则在于不需要标记结束阶段的重新扫描�
 
 ![](./assets/gc-wb-yuasa.png)
 
-目前 Go （1.14）使用的是一种灰色赋值器 Dijkstra 插入屏障和黑色赋值器 Yuasa 删除屏障混合而成的写屏障，
-即混合写屏障。好处在于这种形式的屏障将强三色不变性削弱为弱三色不变性，进而避免了允许灰色赋值器存在的重新扫描。
-混合写屏障的基本思想是
-**对正在被覆盖的对象进行着色，且如果当前栈未扫描完成，则同样对指针进行着色：**
+Go 在 1.8 的时候为了简化 GC 的流程，同时减少标记终止阶段的重扫成本，
+将 Dijkstra 插入屏障和 Yuasa 删除屏障进行混合，形成混合写屏障。该屏障提出时的基本思想是：
+**对正在被覆盖的对象进行着色，且如果当前栈未扫描完成，则同样对指针进行着色。**
+但在最终实现时[原提案](https://github.com/golang/proposal/blob/master/design/17503-eliminate-rescan.md)中对 `ptr` 的着色还额外包含对执行栈的着色检查，但由于
+时间有限，并未完整实现过，所以混合写屏障在目前（Go 1.14）的实现伪代码是：
 
 ```go
 // 混合写屏障
-func HybridWritePointer(slot, ptr unsafe.Pointer) {
-    shade(*slot)
-    if current stack is grey {
-        shade(ptr)
-    }
-    *slot = ptr
-}
-```
-
-上面这种混合写屏障本质上是下面这种对整个引用链条着色的加强版：
-
-```go
-// 混合写屏障（简化版）
-func HybridWritePointerSimple(slot, ptr unsafe.Pointer) {
+func HybridWritePointerSimple(slot *unsafe.Pointer, ptr unsafe.Pointer) {
     shade(*slot)
 	shade(ptr)
     *slot = ptr
 }
 ```
 
-如果无条件对引用双方进行着色，肯定没有问题，但着色成本是双倍的。为了减少着色成本，
-可以想象，为了避免灰色赋值器的出现，即当栈为灰色时候，我们才需要对 `ptr` 进行着色。
+在这个实现中，如果无条件对引用双方进行着色，自然结合了 Dijkstra 和 Yuasa 写屏障的优势，
+但缺点也非常明显，因为着色成本是双倍的，而且编译器需要插入的代码也成倍增加，随之带来的
+结果就是编译后的二进制文件大小也进一步增加。为了针对写屏障的性能进行优化，Go 1.10 前后
+Go 团队随后实现了批量写屏障机制。其基本想法是将需要着色的指针同一写入一个缓存，
+每当缓存满时统一对缓存中的所有 `ptr` 指针进行着色。
 
 # GC 的实现细节
 
@@ -792,7 +783,7 @@ TODO:
 
 - Go 1：串行三色标记清扫
 
-- Go 1.1：并行清扫，标记过程需要 STW，停顿时间在约几百毫秒
+- Go 1.3：并行清扫，标记过程需要 STW，停顿时间在约几百毫秒
 
 - Go 1.5：并发标记清扫，停顿时间在一百毫秒以内
 
@@ -820,7 +811,7 @@ TODO:
 
   - 消除栈重扫，与 1.8.3 几乎一致 ![https://twitter.com/brianhatfield/status/900473287750365184/photo/1](./assets/7.jpeg)
 
-- Go 1.12：整合了两个阶段的 Mark Termination，但引入了一个严重的 GC Bug 至今维修，尚无该 Bug 对 GC 性能影响的报告
+- Go 1.12：整合了两个阶段的 Mark Termination，但引入了一个严重的 GC Bug 至今未修，尚无该 Bug 对 GC 性能影响的报告
 
 - Go 1.13：着手解决向操作系统归还内存的，提出了新的 Scavenger
 
@@ -851,9 +842,18 @@ TODO:
 
 ### ROC
 
-ROC 的全称叫面向请求的收集器（Request Oriented Collector）。它提出了一个请求假设（Request Hypothesis）：与一个完整请求、休眠 goroutine 所关联的对象比其他对象更容易死亡。
-这个假设听起来非常符合直觉，但在实现上，由于垃圾回收器必须确保是否有 goroutine 私有指针被写入公共对象，因此写屏障必须一直打开，这也就产生了该方法的一个致命缺点：昂贵的写屏障导致缓存未命中。
+ROC 的全称叫[面向请求的回收器](https://docs.google.com/document/d/1gCsFxXamW8RRvOe5hECz98Ftk-tcRRJcDFANj2VwCB0/edit)（Request Oriented Collector），它
+其实也是分代 GC 的一种重新叙述。它提出了一个
+请求假设（Request Hypothesis）：与一个完整请求、休眠 goroutine 所关联的对象比其他对象更容易死亡。
+这个假设听起来非常符合直觉，但在实现上，由于垃圾回收器必须确保是否有 goroutine 私有
+指针被写入公共对象，因此写屏障必须一直打开，这也就产生了该方法的致命缺点：
+昂贵的写屏障及其带来的导致缓存未命中，这也是这一设计最终没有被接受的主要原因。
 
+### 传统分代 GC
+
+在发现 ROC 性能不行之后，作为备选方案，Go 团队还尝试了实现[传统的分代式 GC](https://go-review.googlesource.com/c/go/+/137476/12)。但最终同样发现分代假设并不适用于 
+Go 的运行栈机制，年轻代对象在栈上就已经死亡，扫描本就该回收的执行栈并没有为由于分代假设带来明显的性能提升。
+这也是这一设计最终没有被接受的主要原因。
 
 ## 18. 目前提供 GC 的语言以及不提供 GC 的语言有哪些？GC 和 No GC 各自的优缺点是什么？
 
