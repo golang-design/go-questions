@@ -34,8 +34,6 @@ func main() {
 		best = time.Second
 		runtime.GC()
 	}
-
-	fmt.Printf("micro second %v, milli second %v", time.Microsecond, time.Millisecond)
 }
 
 func measure() {
