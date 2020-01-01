@@ -1086,23 +1086,6 @@ GCLargeGs/#g-1000000-12  32.5ms ± 4%
 
 <!-- https://github.com/golang/go/issues/34457 -->
 
-### 5. 当堆较小时，GC 可能导致内存页抖动
-
-TODO:
-
-<!-- https://github.com/golang/go/issues/22743 -->
-
-### 6. 结构体的对齐要求导致内存浪费，从而增加 GC 的开销
-
-TODO:
-
-<!-- https://github.com/golang/go/issues/8885 -->
-<!-- https://github.com/golang/go/issues/11979 -->
-
-### 7. GC 导致的内存碎片
-
-<!-- https://github.com/golang/go/issues/21695 -->
-
 # 总结
 
 GC 是一个复杂的系统工程，本文讨论的二十个问题尽管已经展现了一个相对全面的 Go GC。
