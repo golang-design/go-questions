@@ -1,42 +1,53 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"runtime"
+	"runtime/debug"
 	"runtime/trace"
+	"time"
 )
 
-var cache = map[interface{}]interface{}{}
-
-func keepalloc() {
-	for i := 0; i < 10000; i++ {
-		m := make([]byte, 1<<10)
-		cache[i] = m
+func printGCStats() {
+	t := time.NewTicker(time.Second)
+	s := debug.GCStats{}
+	for {
+		select {
+		case <-t.C:
+			debug.ReadGCStats(&s)
+			fmt.Printf("gc %d last@%v, PauseTotal %v\n", s.NumGC, s.LastGC, s.PauseTotal)
+		}
 	}
 }
 
-func keepalloc2() {
-	for i := 0; i < 100000; i++ {
-		go func() {
-			select {}
-		}()
+func printMemStats() {
+	t := time.NewTicker(time.Second)
+	s := runtime.MemStats{}
+
+	for {
+		select {
+		case <-t.C:
+			runtime.ReadMemStats(&s)
+			fmt.Printf("gc %d last@%v, next_heap_size@%vMB\n", s.NumGC, time.Unix(int64(time.Duration(s.LastGC).Seconds()), 0), s.NextGC/(1<<20))
+		}
 	}
 }
 
-var ch = make(chan struct{})
-
-func keepalloc3() {
-	for i := 0; i < 100000; i++ {
-		// 没有接收方，goroutine 会一直阻塞
-		go func() { ch <- struct{}{} }()
-	}
+func allocate() {
+	_ = make([]byte, 1<<20)
 }
 
 func main() {
+	// go printGCStats()
+	// go printMemStats()
+
 	f, _ := os.Create("trace.out")
 	defer f.Close()
 	trace.Start(f)
 	defer trace.Stop()
-	keepalloc()
-	keepalloc2()
-	keepalloc3()
+
+	for n := 1; n < 100000; n++ {
+		allocate()
+	}
 }
