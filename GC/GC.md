@@ -754,16 +754,131 @@ GC 的调优是在特定场景下产生的，并非所有程序都需要针对 G
 2. 对资源消耗敏感：对于频繁分配内存的应用而言，频繁分配内存增加 GC 的工作量，原本可以充分利用 CPU 的应用不得不不断的执行垃圾回收，影响用户代码的对 CPU 的利用率，进而影响用户代码的执行效率。
 
 从这两点来看，所谓 GC 调优的核心思想也就是充分的围绕上面的两点来展开：
-优化内存的申请速度，尽可能的少申请内存，复用已申请的内存。或者简单来说，不外乎这三个关键字：**加快、减少、复用**。
+优化内存的申请速度，尽可能的少申请内存，复用已申请的内存。或者简单来说，不外乎这三个关键字：**控制、减少、复用**。
 
 我们将通过三个实际例子介绍如何定位 GC 的存在的问题，并一步一步进行性能调优。
 当然，在实际情况中问题远比这些例子要复杂，这里也只是讨论调优的核心思想，更多时候也是具体问题具体分析。
 
-### 例1：合理化内存分配的粒度、减少内存的分配
+### 例1：合理化内存分配的速度、提高赋值器的 CPU 利用率
 
-TODO:
+我们来看这样一个例子。在这个例子中，`concat` 函数负责拼接一些长度不确定的字符串。
+并且为了快速完成任务，出于某种原因，在两个嵌套的 for 循环中一口气创建了 800 个 goroutine。
+在 main 函数中，启动了一个 goroutine 并在程序结束前不断的触发 GC，并尝试输出 GC 的平均执行时间：
 
-### 例2：复用已经申请的内存
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+	"runtime"
+	"runtime/trace"
+	"sync/atomic"
+	"time"
+)
+
+var (
+	stop  int32
+	count int64
+	sum   time.Duration
+)
+
+func concat() {
+	for n := 0; n < 100; n++ {
+		for i := 0; i < 8; i++ {
+			go func() {
+				s := "Go GC"
+				s += " " + "Hello"
+				s += " " + "World"
+				_ = s
+			}()
+		}
+	}
+}
+
+func main() {
+	f, _ := os.Create("trace.out")
+	defer f.Close()
+	trace.Start(f)
+	defer trace.Stop()
+
+	go func() {
+		var t time.Time
+		for atomic.LoadInt32(&stop) == 0 {
+			t = time.Now()
+			runtime.GC()
+			sum += time.Since(t)
+			count++
+		}
+		fmt.Printf("GC spend avg: %v\n", time.Duration(int64(sum)/count))
+	}()
+
+	concat()
+	atomic.StoreInt32(&stop, 1)
+}
+```
+
+这个程序的执行结果是：
+
+```bash
+$ go build -o main
+$ ./main
+GC spend avg: 2.583421ms
+```
+
+GC 平均执行一次需要长达 2ms 的时间，我们再进一步观察 trace 的结果：
+
+![](./assets/gc-tuning-ex1-1.png)
+
+程序的整个执行过程中仅执行了一次 GC，而且仅 Sweep STW 就耗费了超过 1 ms，非常反常。
+甚至查看赋值器 mutator 的 CPU 利用率，在整个 trace 尺度下连 40% 都不到：
+
+![](./assets/gc-tuning-ex1-2.png)
+
+主要原因是什么呢？我们不妨查看 goroutine 的分析：
+
+![](./assets/gc-tuning-ex1-3.png)
+
+在这个榜单中我们不难发现，goroutine 的执行时间占其生命周期总时间的非常短一部分，
+但大部分时间都花费在调度器的等待上了（蓝色的部分），说明同时创建大量 goroutine 对调度器
+产生的压力确实不小，我们不妨将这一产生速率减慢，一批一批的创建 goroutine：
+
+```go
+func concat() {
+	wg := sync.WaitGroup{}
+	for n := 0; n < 100; n++ {
+		wg.Add(8)
+		for i := 0; i < 8; i++ {
+			go func() {
+				s := "Go GC"
+				s += " " + "Hello"
+				s += " " + "World"
+				_ = s
+				wg.Done()
+			}()
+		}
+		wg.Wait()
+	}
+}
+```
+
+这时候我们再来看：
+
+```bash
+$ go build -o main
+$ ./main
+GC spend avg: 328.54µs
+```
+
+GC 的平均时间就降到 300 微秒了。这时的赋值器 CPU 使用率也提高到了 60%，相对来说就很可观了：
+
+![](./assets/gc-tuning-ex1-4.png)
+
+当然，这个程序仍然有优化空间，例如我们其实没有必要等待很多 goroutine 同时执行完毕才去执行下一组 goroutine。
+而可以当一个 goroutine 执行完毕时，直接启动一个新的 goroutine，也就是 goroutine 池的使用。
+有兴趣的读者可以沿着这个思路进一步优化这个程序中赋值器对 CPU 的使用率。
+
+### 例2：降低并复用已经申请的内存
 
 我们通过一个非常简单的 Web 程序来说明复用内存的重要性。在这个程序中，每当产生一个 `/example2`
 的请求时，都会创建一段内存，并用于进行一些后续的工作。
@@ -986,6 +1101,34 @@ Percentage of the requests served within a certain time (ms)
 
 ![](./assets/gc-tuning-ex2-3.png)
 
+sync.Pool 是内存复用的一个最为显著的例子，从语言层面上还有很多类似的例子，例如在例 1 中，
+`concat` 函数可以预先分配一定长度的缓存，而后再通过 append 的方式将字符串存储到缓存中：
+
+```go
+func concat() {
+	wg := sync.WaitGroup{}
+	for n := 0; n < 100; n++ {
+		wg.Add(8)
+		for i := 0; i < 8; i++ {
+			go func() {
+				s := make([]byte, 0, 20)
+				s = append(s, "Go GC"...)
+				s = append(s, ' ')
+				s = append(s, "Hello"...)
+				s = append(s, ' ')
+				s = append(s, "World"...)
+				_ = string(s)
+				wg.Done()
+			}()
+		}
+		wg.Wait()
+	}
+}
+```
+
+原因在于 `+` 运算符会随着字符串长度的增加而申请更多的内存，并将内容从原来的内存位置拷贝到新的内存位置，
+造成大量不必要的内存分配，先提前分配好足够的内存，再慢慢的填充，也是一种减少内存分配、复用内存形式的一种表现。
+
 ### 例3：调整 GOGC
 
 我们已经知道了 GC 的触发原则是由步调算法来控制的，其关键在于估计下一次需要触发 GC 时，
@@ -1070,12 +1213,13 @@ Percentage of the requests served within a certain time (ms)
 
 现在我们来总结以下前面三个例子中的优化情况：
 
-1. 减少返回会逃逸到堆上分配的变量，是变量作为局部变量进行分配，从而可以直接在不被垃圾回收进行清理的情况下，使整个栈供下一个 goroutine 复用。
-2. 将小对象整理为一个大对象来避免内存碎片的问题。
-3. 使用 sync.Pool 来复用需要频繁创建临时对象。
-4. 需要时，增大 GOGC 的值，降低 GC 的运行频率。
+1. 控制内存分配的速度，限制 goroutine 的数量，从而提高赋值器对 CPU 的利用率；
+2. 减少并复用内存，例如使用 sync.Pool 来复用需要频繁创建临时对象，例如提前分配足够的内存来降低多余的拷贝。
+3. 需要时，增大 GOGC 的值，降低 GC 的运行频率。
 
-当然，我们也应该谨记 _过早优化是万恶之源_ 这一警语，在没有遇到应用的真正瓶颈时，
+这三种情况几乎涵盖了 GC 调优中的核心思路，虽然从语言上还有很多小技巧可说，但我们并不会在这里事无巨细的进行总结。
+实际情况也是千变万化，我们更应该着重于培养具体问题具体分析的能力。当然，
+我们还应该谨记 _过早优化是万恶之源_ 这一警语，在没有遇到应用的真正瓶颈时，
 将宝贵的时间分配在开发中其他优先级更高的任务上。
 
 ## 15. Go 的垃圾回收器有哪些相关的 API？其作用分别是什么？
