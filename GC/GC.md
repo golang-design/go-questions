@@ -1,4 +1,4 @@
-> 本文写于 Go 1.14 beta1，当文中提及目前、目前版本等字眼时均指 Go 1.14，此外，文中所有 go 命令版本均为 Go 1.14。
+> 当文中提及目前、目前版本等字眼时均指 Go 1.14，此外，文中所有 go 命令版本均为 Go 1.14。
 
 # GC 的认识
 
@@ -44,7 +44,7 @@
   - 分代式：将对象根据存活时间的长短进行分类，存活时间小于某个值的为年轻代，存活时间大于某个值的为老年代，永远不会参与回收的对象为永久代。并根据分代假设（如果一个对象存活时间不长则倾向于被回收，如果一个对象已经存活很长时间则倾向于存活更长时间）对对象进行回收。
 - 引用计数：根据对象自身的引用计数来回收，当引用计数归零时立即回收。
 
-关于各类方法的详细介绍及其实现不在本文中详细讨论。对于 Go 而言，Go 的 GC 目前使用的是无分代（对象没有代际之分）、不整理（回收过程中不对对象进行移动与整理）、并发（与用户代码并发执行）的三色标记清扫算法。[原因](https://groups.google.com/d/msg/golang-nuts/KJiyv2mV2pU/wdBUH1mHCAAJ)在于：
+关于各类方法的详细介绍及其实现不在本文中详细讨论。对于 Go 而言，Go 的 GC 目前使用的是无分代（对象没有代际之分）、不整理（回收过程中不对对象进行移动与整理）、并发（与用户代码并发执行）的三色标记清扫算法。原因[1]在于：
 
 1. 对象整理的优势是解决内存碎片问题以及“允许”使用顺序内存分配器。但 Go 运行时的分配算法基于 tcmalloc，基本上没有碎片问题。 并且顺序内存分配器在多线程的场景下并不适用。Go 使用的是基于 tcmalloc 的现代内存分配算法，对对象进行整理不会带来实质性的性能提升。
 2. 分代 GC 依赖分代假设，即 GC 将主要的回收目标放在新创建的对象上（存活时间短，更倾向于被回收），而非频繁检查所有对象。但 Go 的编译器会通过**逃逸分析**将大部分新生对象存储在栈上（栈直接被回收），只有那些需要长期存在的对象才会被分配到需要进行垃圾回收的堆中。也就是说，分代 GC 回收的那些存活时间短的对象在 Go 中是直接被分配到栈上，当 goroutine 死亡后栈也会被直接回收，不需要 GC 的参与，进而分代假设并没有带来直接优势。并且 Go 的垃圾回收器与用户代码并发执行，使得 STW 的时间与对象的代际、对象的 size 没有关系。Go 团队更关注于如何更好地让 GC 与用户代码并发执行（使用适当的 CPU 来执行垃圾回收），而非减少停顿时间这一单一目标上。
@@ -63,13 +63,13 @@
 
 当垃圾回收开始时，只有白色对象。随着标记过程开始进行时，灰色对象开始出现（着色），这时候波面便开始扩大。当一个对象的所有子节点均完成扫描时，会被着色为黑色。当整个堆遍历完成时，只剩下黑色和白色对象，这时的黑色对象为可达对象，即存活；而白色对象为不可达对象，即死亡。这个过程可以视为以灰色对象为波面，将黑色对象和白色对象分离，使波面不断向前推进，直到所有可达的灰色对象都变为黑色对象为止的过程。如下图所示：
 
-![三色标记法全貌](https://user-images.githubusercontent.com/7698088/70995777-505fc800-210c-11ea-9f6d-3549f884ff46.png)
+![三色标记法全貌](./assets/gc-blueprint.png)
 
 图中展示了根对象、可达对象、不可达对象，黑、灰、白对象以及波面之间的关系。
 
 ## 5. STW 是什么意思？
 
-`STW` 是 `Stop the World` 的缩写，即万物静止，是指在垃圾回收过程中为了保证实现的正确性、防止无止境的内存增长等问题而不可避免的需要停止赋值器进一步操作对象图的一段过程。
+`STW` 可以是 `Stop the World` 的缩写，也可以是 `Start the World` 的缩写。通常意义上指指代从 `Stop the World` 这一动作发生时到 `Start the World` 这一动作发生时这一段时间间隔，即万物静止。STW 在垃圾回收过程中为了保证实现的正确性、防止无止境的内存增长等问题而不可避免的需要停止赋值器进一步操作对象图的一段过程。
 
 在这个过程中整个用户代码被停止或者放缓执行， `STW` 越长，对用户代码造成的影响（例如延迟）就越大，早期 Go 对垃圾回收器的实现中 `STW` 长达几百毫秒，对时间敏感的实时通信等应用程序会造成巨大的影响。我们来看一个例子：
 
@@ -93,9 +93,9 @@ func main() {
 }
 ```
 
-上面的这个程序在 Go 1.14 以前永远都不会输出 `OK`，其罪魁祸首是 STW 无限制的被延长。
+上面的这个程序在 Go 1.14 以前永远都不会输出 `OK`，其罪魁祸首是进入 STW 这一操作的执行无限制的被延长。
 
-尽管 STW 如今已经优化到了半毫秒级别以下，但这个程序被卡死原因在于仍然是 STW 导致的。原因在于，GC 在进入 STW 时，需要等待让所有的用户态代码停止，但是 `for {}` 所在的 goroutine 永远都不会被中断，从而停留在 STW 阶段。实际实践中也是如此，当程序的某个 goroutine 长时间得不到停止，强行拖慢 STW，这种情况下造成的影响（卡死）是非常可怕的。好在自 Go 1.14 之后，这类 goroutine 能够被异步地抢占，从而使得 STW 的时间如同普通程序那样，不会超过半个毫秒，程序也不会因为仅仅等待一个 goroutine 的停止而停顿在 STW 阶段。
+尽管 STW 如今已经优化到了半毫秒级别以下，但这个程序被卡死原因是由于需要进入 STW 导致的。原因在于，GC 在需要进入 STW 时，需要通知并让所有的用户态代码停止，但是 `for {}` 所在的 goroutine 永远都不会被中断，从而始终无法进入 STW 阶段。实际实践中也是如此，当程序的某个 goroutine 长时间得不到停止，强行拖慢进入 STW 的时机，这种情况下造成的影响（卡死）是非常可怕的。好在自 Go 1.14 之后，这类 goroutine 能够被异步地抢占，从而使得进入 STW 的时间不会超过抢占信号触发的周期，程序也不会因为仅仅等待一个 goroutine 的停止而停顿在进入 STW 之前的操作上。
 
 ## 6. 如何观察 Go GC？
 
@@ -207,11 +207,11 @@ scvg: inuse: 3, idle: 60, sys: 63, released: 57, consumed: 6 (MB)
 | 字段          | 含义                                                         |
 | :------------ | :----------------------------------------------------------- |
 | 8 KB released | 向操作系统归还了 8 KB 内存                                   |
-| 3             | 已经分配给用户代码、正在使用的总内存大小 (MB)。MB used or partially used spans |
-| 60            | 空闲以及等待归还给操作系统的总内存大小（MB）。MB spans pending scavenging |
-| 63            | 通知操作系统中保留的内存大小（MB）MB mapped from the system  |
-| 57            | 已经归还给操作系统的（或者说还未正式申请）的内存大小（MB）。MB released to the system |
-| 6             | 已经从操作系统中申请的内存大小（MB）。MB allocated from the system |
+| 3             | 已经分配给用户代码、正在使用的总内存大小 (MB) |
+| 60            | 空闲以及等待归还给操作系统的总内存大小（MB） |
+| 63            | 通知操作系统中保留的内存大小（MB） |
+| 57            | 已经归还给操作系统的（或者说还未正式申请）的内存大小（MB） |
+| 6             | 已经从操作系统中申请的内存大小（MB） |
 
 ### 方式2：`go tool trace`
 
@@ -250,6 +250,7 @@ $ go tool trace trace.out
 
 - w/s 键可以用于放大或者缩小视图
 - a/d 键可以用于左右移动
+- 按住 Shift 可以选取多个事件
 
 ### 方式3：`debug.ReadGCStats`
 
@@ -317,8 +318,8 @@ gc 15231 last@2019-12-30 15:44:58 +0100 CET, next_heap_size@4MB
 gc 20378 last@2019-12-30 15:44:59 +0100 CET, next_heap_size@6MB
 ```
 
-当然，后两种方式能够监控的指标很多，读者可以自行查看 [`debug.GCStats`](https://golang.org/pkg/runtime/debug/#GCStats) 和 
-[`runtime.MemStats`](https://golang.org/pkg/runtime/#MemStats) 的字段，这里不再赘述。
+当然，后两种方式能够监控的指标很多，读者可以自行查看 `debug.GCStats` [2] 和 
+`runtime.MemStats` [3] 的字段，这里不再赘述。
 
 ## 7. 有了 GC，为什么还会发生内存泄露？
 
@@ -443,11 +444,11 @@ func keepalloc3() {
 我们不妨将三色不变性所定义的波面根据这两个条件进行削弱：
 
 - 当满足原有的三色不变性定义（或上面的两个条件都不满足时）的情况称为**强三色不变性（strong tricolor invariant）**
-<!-- 即不存在黑色对象指向白色对象的指针； -->
 - 当赋值器令黑色对象引用白色对象时（满足条件 1 时）的情况称为**弱三色不变性（weak tricolor invariant）**
-<!-- 即所有黑色对象引用的白色对象都处于灰色保护状态（直接或间接从灰色对象可达）。 -->
 
-当赋值器进一步破坏灰色对象到达白色对象的路径时（进一步满足条件 2 时），即打破弱三色不变性，也就破坏了回收器的正确性；或者说，在破坏强弱三色不变性时必须引入额外的辅助操作。弱三色不变形的好处在于：**只要存在未访问的能够到达白色对象的路径，就可以将黑色对象指向白色对象。**
+当赋值器进一步破坏灰色对象到达白色对象的路径时（进一步满足条件 2 时），即打破弱三色不变性，
+也就破坏了回收器的正确性；或者说，在破坏强弱三色不变性时必须引入额外的辅助操作。
+弱三色不变形的好处在于：**只要存在未访问的能够到达白色对象的路径，就可以将黑色对象指向白色对象。**
 
 如果我们考虑并发的用户态代码，回收器不允许同时停止所有赋值器，就是涉及了存在的多个不同状态的赋值器。为了对概念加以明确，还需要换一个角度，把回收器视为对象，把赋值器视为影响回收器这一对象的实际行为（即影响 GC 周期的长短），从而引入赋值器的颜色：
 
@@ -461,7 +462,7 @@ func keepalloc3() {
 
 于是，在允许灰色赋值器存在的算法，最坏的情况下，回收器只能将所有赋值器线程停止才能完成其跟对象的完整扫描，也就是我们所说的 STW。
 
-为了确保强弱三色不变性的并发指针更新操作，需要通过赋值器屏障技术来保证指针的读写操作一致。因此我们所说的 Go 中的写屏障、混合写屏障，其实是指赋值器的写屏障，赋值器的写屏障用来保证赋值器在进行指针写操作时，不会破坏弱三色不变性。
+为了确保强弱三色不变性的并发指针更新操作，需要通过赋值器屏障技术来保证指针的读写操作一致。因此我们所说的 Go 中的写屏障、混合写屏障，其实是指赋值器的写屏障，赋值器的写屏障作为一种同步机制，使赋值器在进行指针写操作时，能够“通知”回收器，进而不会破坏弱三色不变性。
 
 有两种非常经典的写屏障：Dijkstra 插入屏障和 Yuasa 删除屏障。
 
@@ -475,13 +476,16 @@ func DijkstraWritePointer(slot *unsafe.Pointer, ptr unsafe.Pointer) {
 }
 ```
 
-为了防止黑色对象指向白色对象，应该假设 `*slot` 可能会变为黑色，为了确保 `ptr` 不会在被赋值到 `*slot` 前变为白色，`shade(ptr)` 会先将指针 `ptr` 标记为灰色，进而避免了条件 1。但是，由于并不清楚赋值器以后会不会将这个引用删除，因此还需要重新扫描来重新确定关系图，这时需要 STW，如图所示：
+为了防止黑色对象指向白色对象，应该假设 `*slot` 可能会变为黑色，为了确保 `ptr` 不会在被赋值到 `*slot` 前变为白色，`shade(ptr)` 会先将指针 `ptr` 标记为灰色，进而避免了条件 1。如图所示：
 
 ![](./assets/gc-wb-dijkstra.png)
 
-Dijkstra 插入屏障的好处在于可以立刻开始并发标记，但由于产生了灰色赋值器，缺陷是需要标记终止阶段 STW 时进行重新扫描。
+Dijkstra 插入屏障的好处在于可以立刻开始并发标记。但存在两个缺点：
 
-黑色赋值器的 Yuasa 删除屏障的基本思想是避免满足条件 2：
+1. 由于 Dijkstra 插入屏障的“保守”，在一次回收过程中可能会残留一部分对象没有回收成功，只有在下一个回收过程中才会被回收；
+2. 在标记阶段中，每次进行指针赋值操作时，都需要引入写屏障，这无疑会增加大量性能开销；为了避免造成性能问题，Go 团队在最终实现时，没有为所有栈上的指针写操作，启用写屏障，而是当发生栈上的写操作时，将栈标记为灰色，但此举产生了灰色赋值器，将会需要标记终止阶段 STW 时对这些栈进行重新扫描。
+
+另一种比较经典的写屏障是黑色赋值器的 Yuasa 删除屏障。其基本思想是避免满足条件 2：
 
 ```go
 // 黑色赋值器 Yuasa 屏障
@@ -493,24 +497,24 @@ func YuasaWritePointer(slot *unsafe.Pointer, ptr unsafe.Pointer) {
 
 为了防止丢失从灰色对象到白色对象的路径，应该假设 `*slot` 可能会变为黑色，为了确保 `ptr` 不会在被赋值到 `*slot` 前变为白色，`shade(*slot)` 会先将 `*slot` 标记为灰色，进而该写操作总是创造了一条灰色到灰色或者灰色到白色对象的路径，进而避免了条件 2。
 
-Yuasa 删除屏障的优势则在于不需要标记结束阶段的重新扫描，缺陷是依然会产生丢失的对象，需要在标记开始前对整个对象图进行快照。
+Yuasa 删除屏障的优势则在于不需要标记结束阶段的重新扫描，结束时候能够准确的回收所有需要回收的白色对象。缺陷是 Yuasa 删除屏障会拦截写操作，进而导致波面的退后，产生“冗余”的扫描：
 
 ![](./assets/gc-wb-yuasa.png)
 
 Go 在 1.8 的时候为了简化 GC 的流程，同时减少标记终止阶段的重扫成本，将 Dijkstra 插入屏障和 Yuasa 删除屏障进行混合，形成混合写屏障。该屏障提出时的基本思想是：**对正在被覆盖的对象进行着色，且如果当前栈未扫描完成，则同样对指针进行着色。**
 
-但在最终实现时[原提案](https://github.com/golang/proposal/blob/master/design/17503-eliminate-rescan.md)中对 `ptr` 的着色还额外包含对执行栈的着色检查，但由于时间有限，并未完整实现过，所以混合写屏障在目前的实现伪代码是：
+但在最终实现时原提案[4]中对 `ptr` 的着色还额外包含对执行栈的着色检查，但由于时间有限，并未完整实现过，所以混合写屏障在目前的实现伪代码是：
 
 ```go
 // 混合写屏障
 func HybridWritePointerSimple(slot *unsafe.Pointer, ptr unsafe.Pointer) {
-    shade(*slot)
-	  shade(ptr)
-    *slot = ptr
+	shade(*slot)
+	shade(ptr)
+	*slot = ptr
 }
 ```
 
-在这个实现中，如果无条件对引用双方进行着色，自然结合了 Dijkstra 和 Yuasa 写屏障的优势，但缺点也非常明显，因为着色成本是双倍的，而且编译器需要插入的代码也成倍增加，随之带来的结果就是编译后的二进制文件大小也进一步增加。为了针对写屏障的性能进行优化，Go 1.10 前后，Go 团队随后实现了批量写屏障机制。其基本想法是将需要着色的指针同一写入一个缓存，每当缓存满时统一对缓存中的所有 `ptr` 指针进行着色。
+在这个实现中，如果无条件对引用双方进行着色，自然结合了 Dijkstra 和 Yuasa 写屏障的优势，但缺点也非常明显，因为着色成本是双倍的，而且编译器需要插入的代码也成倍增加，随之带来的结果就是编译后的二进制文件大小也进一步增加。为了针对写屏障的性能进行优化，Go 1.10 前后，Go 团队随后实现了批量写屏障机制。其基本想法是将需要着色的指针统一写入一个缓存，每当缓存满时统一对缓存中的所有 `ptr` 指针进行着色。
 
 # GC 的实现细节
 
@@ -518,17 +522,17 @@ func HybridWritePointerSimple(slot *unsafe.Pointer, ptr unsafe.Pointer) {
 
 当前版本的 Go 以 STW 为界限，可以将 GC 划分为五个阶段：
 
-|       阶段        |                         说明                         | 赋值器状态 |
-| :---------------: | :--------------------------------------------------: | :--------: |
-|      GCMark       |    标记准备阶段，为并发标记做准备工作，启动写屏障    |    STW     |
-|      GCMark       |      扫描标记阶段，与赋值器并发执行，写屏障开启      |    并发    |
-| GCMarkTermination | 标记终止阶段，保证一个周期内标记任务完成，停止写屏障 |    STW     |
-|       GCoff       | 内存清扫阶段，将需要回收的内存归还到堆中，写屏障关闭 |    并发    |
-|       GCoff       | 内存归还阶段，将过多的内存归还给操作系统，写屏障关闭 |    并发    |
+|       阶段       |                            说明                            | 赋值器状态 |
+| :--------------: | :--------------------------------------------------------: | :--------: |
+| SweepTermination | 清扫终止阶段，为下一个阶段的并发标记做准备工作，启动写屏障 |    STW     |
+|       Mark       |         扫描标记阶段，与赋值器并发执行，写屏障开启         |    并发    |
+| MarkTermination  |    标记终止阶段，保证一个周期内标记任务完成，停止写屏障    |    STW     |
+|      GCoff       |    内存清扫阶段，将需要回收的内存归还到堆中，写屏障关闭    |    并发    |
+|      GCoff       |    内存归还阶段，将过多的内存归还给操作系统，写屏障关闭    |    并发    |
 
 具体而言，各个阶段的触发函数分别为：
 
-![gc-process](https://user-images.githubusercontent.com/7698088/71047691-930aba00-2177-11ea-84d5-4e9eac2df723.png)
+![gc-process](./assets/gc-process.png)
 
 ## 11. 触发 GC 的时机是什么？
 
@@ -544,11 +548,11 @@ Go 语言中对 GC 的触发时机存在两种形式：
 
 通过 `GOGC` 或者 `debug.SetGCPercent` 进行控制（他们控制的是同一个变量，即堆的增长率 $\rho$）。整个算法的设计考虑的是优化问题：如果设上一次 GC 完成时，内存的数量为 $H_m$（heap marked），估计需要触发 GC 时的堆大小 $H_T$（heap trigger），使得完成 GC 时候的目标堆大小 $H_g$（heap goal） 与实际完成时候的堆大小 $H_a$（heap actual）最为接近，即： $\min |H_g - H_a| = \min|(1+\rho)H_m - H_a|$。
 
-![gc-pacing](https://user-images.githubusercontent.com/7698088/71047935-5e4b3280-2178-11ea-9abd-c86667ac9f88.png)
+![gc-pacing](./assets/gc-pacing.png)
 
 除此之外，步调算法还需要考虑 CPU 利用率的问题，显然我们不应该让垃圾回收器占用过多的 CPU，即不应该让每个负责执行用户 goroutine 的线程都在执行标记过程。理想情况下，在用户代码满载的时候，GC 的 CPU 使用率不应该超过 25%，即另一个优化问题：如果设 $u_g$为目标 CPU 使用率（goal utilization），而 $u_a$为实际 CPU 使用率（actual utilization），则 $\min|u_g - u_a|$。
 
-> 求解这两个优化问题的具体数学建模过程我们不在此做深入讨论，有兴趣的读者可以参考两个设计文档：[Go 1.5 concurrent garbage collector pacing](https://docs.google.com/document/d/1wmjrocXIWTr1JxU-3EQBI6BK6KgtiFArkG47XK73xIQ/edit#) 和 [Separate soft and hard heap size goal](https://github.com/golang/proposal/blob/master/design/14951-soft-heap-limit.md)。
+> 求解这两个优化问题的具体数学建模过程我们不在此做深入讨论，有兴趣的读者可以参考两个设计文档：Go 1.5 concurrent garbage collector pacing[5] 和 Separate soft and hard heap size goal[6]。
 
 计算 $H_T$ 的最终结论（从 Go 1.10 时开始 $h_t$ 增加了上界 $0.95 \rho$，从 Go 1.14 开始时 $h_t$ 增加了下界 0.6）是：
 
@@ -1163,7 +1167,7 @@ Percentage of the requests served within a certain time (ms)
 
 ### 小结
 
-通过上面的三个例子我们可以看到在 GC 调优过程中 `go tool pprof` 和 `go tool trace` 的强大作用是帮助我们快速定位 GC 导致瓶颈的具体位置，但这些例子中仅仅覆盖了其功能的很小一部分，我们也没有必要完整覆盖所有的功能，因为总是可以通过[http pprof 官方文档](https://golang.org/pkg/net/http/pprof/)、[runtime pprof官方文档](https://golang.org/pkg/runtime/pprof/)以及[trace 官方文档](https://golang.org/pkg/runtime/trace/)来举一反三。
+通过上面的三个例子我们可以看到在 GC 调优过程中 `go tool pprof` 和 `go tool trace` 的强大作用是帮助我们快速定位 GC 导致瓶颈的具体位置，但这些例子中仅仅覆盖了其功能的很小一部分，我们也没有必要完整覆盖所有的功能，因为总是可以通过http pprof 官方文档[7]、runtime pprof官方文档[8]以及 trace 官方文档[9]来举一反三。
 
 现在我们来总结一下前面三个例子中的优化情况：
 
@@ -1184,8 +1188,7 @@ Percentage of the requests served within a certain time (ms)
 - debug.FreeOSMemory：手动将内存归还给操作系统
 - debug.ReadGCStats：读取关于 GC 的相关统计信息
 - debug.SetGCPercent：设置 GOGC 调步变量
-- debug.SetMaxHeap（尚未发布）：设置 Go 程序堆的上限值
-  <!-- - https://github.com/golang/go/issues/23044 -->
+- debug.SetMaxHeap（尚未发布[10]）：设置 Go 程序堆的上限值
 
 # GC 的历史及演进
 
@@ -1215,7 +1218,7 @@ Percentage of the requests served within a certain time (ms)
 
 ![](assets/gc1.png)
 
-在 Go 1 刚发布时的版本中，甚至没有将 Mark-Sweep 的过程并行化，当需要进行垃圾回收时，所有的代码都必须进入 STW 的状态。而到了 Go 1.1 时，官方迅速地将清扫过程进行了并行化的处理，即仅在标记阶段进入 STW。
+在 Go 1 刚发布时的版本中，甚至没有将 Mark-Sweep 的过程并行化，当需要进行垃圾回收时，所有的代码都必须进入 STW 的状态。而到了 Go 1.3 时，官方迅速地将清扫过程进行了并行化的处理，即仅在标记阶段进入 STW。
 
 这一想法很自然，因为并行化导致算法结果不一致的情况仅仅发生在标记阶段，而当时的垃圾回收器没有针对并行结果的一致性进行任何优化，因此才需要在标记阶段进入 STW。对于 Scavenger 而言，早期的版本中会有一个单独的线程来定期将多余的内存归还给操作系统。
 
@@ -1233,15 +1236,15 @@ Percentage of the requests served within a certain time (ms)
 
 ### 并发栈重扫
 
-正如我们前面所说，允许灰色赋值器存在的垃圾回收器需要引入重扫过程来保证算法的正确性，除了引入混合屏障来消除重扫这一过程外，有另一种做法可以提高重扫过程的性能，那就是将重扫的过程并发执行。然而这一[方案](https://github.com/golang/proposal/blob/master/design/17505-concurrent-rescan.md)并没有得以实现，原因很简单：实现过程相比引入混合屏障而言十分复杂，而且引入混合屏障能够消除重扫这一过程，将简化垃圾回收的步骤。
+正如我们前面所说，允许灰色赋值器存在的垃圾回收器需要引入重扫过程来保证算法的正确性，除了引入混合屏障来消除重扫这一过程外，有另一种做法可以提高重扫过程的性能，那就是将重扫的过程并发执行。然而这一方案[11]并没有得以实现，原因很简单：实现过程相比引入混合屏障而言十分复杂，而且引入混合屏障能够消除重扫这一过程，将简化垃圾回收的步骤。
 
 ### ROC
 
-ROC 的全称是[面向请求的回收器](https://docs.google.com/document/d/1gCsFxXamW8RRvOe5hECz98Ftk-tcRRJcDFANj2VwCB0/edit)（Request Oriented Collector），它其实也是分代 GC 的一种重新叙述。它提出了一个请求假设（Request Hypothesis）：与一个完整请求、休眠 goroutine 所关联的对象比其他对象更容易死亡。这个假设听起来非常符合直觉，但在实现上，由于垃圾回收器必须确保是否有 goroutine 私有指针被写入公共对象，因此写屏障必须一直打开，这也就产生了该方法的致命缺点：昂贵的写屏障及其带来的缓存未命中，这也是这一设计最终没有被采用的主要原因。
+ROC 的全称是面向请求的回收器（Request Oriented Collector）[12]，它其实也是分代 GC 的一种重新叙述。它提出了一个请求假设（Request Hypothesis）：与一个完整请求、休眠 goroutine 所关联的对象比其他对象更容易死亡。这个假设听起来非常符合直觉，但在实现上，由于垃圾回收器必须确保是否有 goroutine 私有指针被写入公共对象，因此写屏障必须一直打开，这也就产生了该方法的致命缺点：昂贵的写屏障及其带来的缓存未命中，这也是这一设计最终没有被采用的主要原因。
 
 ### 传统分代 GC
 
-在发现 ROC 性能不行之后，作为备选方案，Go 团队还尝试了实现[传统的分代式 GC](https://go-review.googlesource.com/c/go/+/137476/12)。但最终同样发现分代假设并不适用于 Go 的运行栈机制，年轻代对象在栈上就已经死亡，扫描本就该回收的执行栈并没有为由于分代假设带来明显的性能提升。这也是这一设计最终没有被采用的主要原因。
+在发现 ROC 性能不行之后，作为备选方案，Go 团队还尝试了实现传统的分代式 GC [13]。但最终同样发现分代假设并不适用于 Go 的运行栈机制，年轻代对象在栈上就已经死亡，扫描本就该回收的执行栈并没有为由于分代假设带来明显的性能提升。这也是这一设计最终没有被采用的主要原因。
 
 ## 18. 目前提供 GC 的语言以及不提供 GC 的语言有哪些？GC 和 No GC 各自的优缺点是什么？
 
@@ -1300,7 +1303,7 @@ Java 的 GC 称之为 G1，并将整个堆分为年轻代、老年代和永久�
 
 在 Go、Java 和 V8 JavaScript 之间比较 GC 的性能本质上是一个不切实际的问题。如前面所说，垃圾回收器的设计权衡了很多方面的因素，同时还受语言自身设计的影响，因为语言的设计也直接影响了程序员编写代码的形式，也就自然影响了产生垃圾的方式。
 
-但总的来说，他们三者对垃圾回收的实现都需要 STW，并均已达到了用户代码几乎无法感知到的状态（据 Go GC 作者 Austin 宣称 [STW 小于 100 微秒](https://groups.google.com/d/msg/golang-dev/Ab1sFeoZg_8/_DaL0E8fAwAJ)）。当然，随着 STW 的减少，垃圾回收器会增加 CPU 的使用率，这也是程序员在编写代码时需要手动进行优化的部分，即充分考虑内存分配的必要性，减少过多申请内存带给垃圾回收器的压力。
+但总的来说，他们三者对垃圾回收的实现都需要 STW，并均已达到了用户代码几乎无法感知到的状态（据 Go GC 作者 Austin 宣称STW 小于 100 微秒 [14]）。当然，随着 STW 的减少，垃圾回收器会增加 CPU 的使用率，这也是程序员在编写代码时需要手动进行优化的部分，即充分考虑内存分配的必要性，减少过多申请内存带给垃圾回收器的压力。
 
 ## 20. 目前 Go 语言的 GC 还存在哪些问题？
 
@@ -1414,7 +1417,7 @@ Best send delay 337ns at 3.173649445s, worst send delay: 6.989577ms at 3.3617161
 
 ### 3. 由于 GC 算法的不正确性导致 GC 周期被迫重新执行
 
-此问题很难复现，但是一个已知的问题，根据 Go 团队的描述，[能够在 1334 次构建中发生一次](https://github.com/golang/go/issues/27993#issuecomment-441719687)，我们可以计算出其触发概率约为 0.0007496251874。虽然发生概率很低，但一旦发生，GC 需要被重新执行，非常不幸。
+此问题很难复现，但是一个已知的问题，根据 Go 团队的描述，能够在 1334 次构建中发生一次 [15]，我们可以计算出其触发概率约为 0.0007496251874。虽然发生概率很低，但一旦发生，GC 需要被重新执行，非常不幸。
 
 <!-- https://github.com/golang/go/issues/27993 -->
 
@@ -1474,28 +1477,34 @@ GCLargeGs/#g-1000000-12  32.5ms ± 4%
 
 # 总结
 
-GC 是一个复杂的系统工程，本文讨论的二十个问题尽管已经展现了一个相对全面的 Go GC。但它们仍然只是 GC 这一宏观问题的一些较为重要的部分，还有非常多的细枝末节、研究进展无法在有限的篇幅内完整讨论。
+GC 是一个复杂的系统工程，本文讨论的二十个问题尽管已经展现了一个相对全面的 Go GC。
+但它们仍然只是 GC 这一宏观问题的一小部分较为重要的内容，还有非常多的细枝末节、研究进展无法在有限的篇幅内完整讨论。
 
-从 Go 诞生之初，Go 团队就一直在对 GC 的表现进行实验与优化，但仍然有诸多未解决的问题，我们不妨对 GC 未来的改进拭目以待。
+从 Go 诞生之初，Go 团队就一直在对 GC 的表现进行实验与优化，但仍然有诸多未解决的公开问题，我们不妨对 GC 未来的改进拭目以待。
 
-# 推荐阅读
+# 进一步阅读的主要参考文献
 
-【Why golang garbage-collector not implement Generational and Compact gc?】https://groups.google.com/forum/#!msg/golang-nuts/KJiyv2mV2pU/wdBUH1mHCAAJ
+- [1] Ian Lance Taylor. Why golang garbage-collector not implement Generational and Compact gc? May 2017. https://groups.google.com/forum/#!msg/golang-nuts/KJiyv2mV2pU/wdBUH1mHCAAJ
+- [2] Go Team. `debug.GCStats`. Last access: Jan, 2020. https://golang.org/pkg/runtime/debug/#GCStats
+- [3] Go Team. `runtime.MemStats`. Last access: Jan, 2020. https://golang.org/pkg/runtime/#MemStats
+- [4] Austin Clements, Rick Hudson. Proposal: Eliminate STW stack re-scanning. Oct, 2016. https://github.com/golang/proposal/blob/master/design/17503-eliminate-rescan.md
+- [5] Austin Clements. Go 1.5 concurrent garbage collector pacing. Mar, 2015. https://docs.google.com/document/d/1wmjrocXIWTr1JxU-3EQBI6BK6KgtiFArkG47XK73xIQ/edit#
+- [6] Austin Clements. Proposal: Separate soft and hard heap size goal. Oct, 2017. https://github.com/golang/proposal/blob/master/design/14951-soft-heap-limit.md
+- [7] Go Team. HTTP pprof. Last access: Jan, 2020. https://golang.org/pkg/net/http/pprof/
+- [8] Go Team. Runtime pprof. Last access: Jan, 2020. https://golang.org/pkg/runtime/pprof/
+- [9] Go Team. Package trace. Last access: Jan, 2020. https://golang.org/pkg/runtime/trace/
+- [10] Caleb Spare. proposal: runtime: add a mechanism for specifying a minimum target heap size. Last access: Jan, 2020. https://github.com/golang/go/issues/23044
+- [11] Austin Clements, Rick Hudson. Proposal: Concurrent stack re-scanning. Oct, 2016. https://github.com/golang/proposal/blob/master/design/17505-concurrent-rescan.md
+- [12] Rick Hudson, Austin Clements. Request Oriented Collector (ROC) Algorithm. Jun, 2016. https://docs.google.com/document/d/1gCsFxXamW8RRvOe5hECz98Ftk-tcRRJcDFANj2VwCB0/edit
+- [13] Rick Hudson. runtime: constants and data structures for generational GC. Mar, 2019. https://go-review.googlesource.com/c/go/+/137476/12
+- [14] Austin Clements. Sub-millisecond GC pauses. Oct, 2016. https://groups.google.com/d/msg/golang-dev/Ab1sFeoZg_8/_DaL0E8fAwAJ
+- [15] Austin Clements. runtime: error message: P has cached GC work at end of mark termination. Nov, 2018. https://github.com/golang/go/issues/27993#issuecomment-441719687
 
-【写一个内存分配器】http://dmitrysoshnikov.com/compilers/writing-a-memory-allocator/#more-3590
+# 其他参考文献
 
-【观察 GC】https://www.ardanlabs.com/blog/2019/05/garbage-collection-in-go-part2-gctraces.html
+- [16] Dmitry Soshnikov. Writing a Memory Allocator. Feb. 2019. http://dmitrysoshnikov.com/compilers/writing-a-memory-allocator/#more-3590
+- [17] William Kennedy. Garbage Collection In Go : Part II - GC Traces. May 2019. https://www.ardanlabs.com/blog/2019/05/garbage-collection-in-go-part2-gctraces.html
+- [18] Rhys Hiltner. An Introduction to go tool trace. Last access: Jan, 2020. https://about.sourcegraph.com/go/an-introduction-to-go-tool-trace-rhys-hiltner
+- [19] 煎鱼. 用 GODEBUG 看 GC. Sep, 2019. https://segmentfault.com/a/1190000020255157
+- [20] 煎鱼. Go 大杀器之跟踪剖析 trace. Last access: Jan, 2020. https://eddycjy.gitbook.io/golang/di-9-ke-gong-ju/go-tool-trace
 
-【煎鱼 Go debug】https://segmentfault.com/a/1190000020255157
-
-【煎鱼 go tool trace】https://eddycjy.gitbook.io/golang/di-9-ke-gong-ju/go-tool-trace
-
-【trace 讲解】https://www.itcodemonkey.com/article/5419.html
-
-【An Introduction to go tool trace】https://about.sourcegraph.com/go/an-introduction-to-go-tool-trace-rhys-hiltner
-
-【http pprof 官方文档】https://golang.org/pkg/net/http/pprof/
-
-【runtime pprof 官方文档】https://golang.org/pkg/runtime/pprof/
-
-【trace 官方文档】https://golang.org/pkg/runtime/trace/
