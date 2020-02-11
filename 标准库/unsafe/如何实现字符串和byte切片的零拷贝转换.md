@@ -15,31 +15,15 @@ type SliceHeader struct {
 }
 ```
 
-上面是反射包下的结构体，路径：src/reflect/value.go。只需要共享底层 []byte 数组就可以实现 `zero-copy`。
+上面是反射包下的结构体，路径：src/reflect/value.go。只需要共享底层 Data 和 Len 就可以实现 `zero-copy`。
 
 ```golang
 func string2bytes(s string) []byte {
-	stringHeader := (*reflect.StringHeader)(unsafe.Pointer(&s))
-
-	bh := reflect.SliceHeader{
-		Data: stringHeader.Data,
-		Len:  stringHeader.Len,
-		Cap:  stringHeader.Len,
-	}
-
-	return *(*[]byte)(unsafe.Pointer(&bh))
+	return *(*[]byte)(unsafe.Pointer(&s))
 }
-
 func bytes2string(b []byte) string{
-	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-
-	sh := reflect.StringHeader{
-		Data: sliceHeader.Data,
-		Len:  sliceHeader.Len,
-	}
-
-	return *(*string)(unsafe.Pointer(&sh))
+	return *(*string)(unsafe.Pointer(&b))
 }
 ```
 
-代码比较简单，不作详细解释。通过构造 slice header 和 string header，来完成 string 和 byte slice 之间的转换。
+原理上是利用指针的强转，代码比较简单，不作详细解释。
