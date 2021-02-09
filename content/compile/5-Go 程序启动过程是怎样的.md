@@ -32,7 +32,7 @@ go build -gcflags "-N -l" -o hello src/main.go
 
 进入 gdb 调试模式，执行 `info files`，得到可执行文件的文件头，列出了各种段：
 
-![gdb info](https://user-images.githubusercontent.com/7698088/60392813-db88d980-9b3d-11e9-8b0f-7c1d845a8191.png)
+![gdb info](../assets/20.png)
 
 同时，我们也得到了入口地址：0x450e20。
 
@@ -107,7 +107,7 @@ GLOBL	runtime·mainPC(SB),RODATA,$8
 
 最后用一张图来总结 go bootstrap 过程吧：
 
-![golang bootstrap](https://user-images.githubusercontent.com/7698088/60493589-b2a04a00-9cdf-11e9-9c9e-a4b275973f60.png)
+![golang bootstrap](../assets/21.png)
 
 main 函数里执行的一些重要的操作包括：新建一个线程执行 sysmon 函数，定期垃圾回收和调度抢占；启动 gc；执行所有的 init 函数等等。
 

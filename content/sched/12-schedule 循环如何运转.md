@@ -8,7 +8,7 @@ slug: /sched-loop-exec
 
 从前面的文章我们知道，普通 goroutine（gp）就是在 schedule 函数中被选中，然后才有机会执行。而现在，gp 执行完之后，再次进入 schedule 函数，形成一个循环。这个循环太长了，我们有必要再重新梳理一下。
 
-![调度循环](https://user-images.githubusercontent.com/7698088/64071400-660bc780-ccac-11e9-8816-1dc43d60bd80.png)
+![调度循环](../assets/3.png)
 
 如图所示，rt0_go 负责 Go 程序启动的所有初始化，中间进行了很多初始化工作，调用 mstart 之前，已经切换到了 g0 栈，图中不同色块表示使用不同的栈空间。
 

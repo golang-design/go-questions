@@ -8,7 +8,7 @@ Go 常用来写后台服务，通常只需要几行代码，就可以搭建一�
 
 在 Go 的 server 里，通常每来一个请求都会启动若干个 goroutine 同时工作：有些去数据库拿数据，有些调用下游接口获取相关数据……
 
-![request](https://user-images.githubusercontent.com/7698088/59235934-643ee480-8c26-11e9-8931-456333900657.png)
+![request](../assets/0.png)
 
 这些 goroutine 需要共享这个请求的基本数据，例如登陆的 token，处理请求的最大超时时间（如果超过此值再返回数据，请求方因为超时接收不到）等等。当请求被取消或是处理时间太长，这有可能是使用者关闭了浏览器或是已经超过了请求方规定的超时时间，请求方直接放弃了这次请求结果。这时，所有正在为这个请求工作的 goroutine 需要快速退出，因为它们的“工作成果”不再被需要了。在相关联的 goroutine 都退出后，系统就可以回收相关的资源。
 
@@ -18,7 +18,7 @@ Go 常用来写后台服务，通常只需要几行代码，就可以搭建一�
 
 context 包就是为了解决上面所说的这些问题而开发的：在 一组 goroutine 之间传递共享的值、取消信号、deadline……
 
-![request with context](https://user-images.githubusercontent.com/7698088/59235969-a405cc00-8c26-11e9-9448-2c6c86e8263b.png)
+![request with context](../assets/1.png)
 
 用简练一些的话来说，在Go 里，我们不能直接杀死协程，协程的关闭一般会用 `channel+select` 方式来控制。但是在某些场景下，例如处理一个请求衍生了很多协程，这些协程之间是相互关联的：需要共享一些全局变量、有共同的 deadline 等，而且可以同时被关闭。再用 `channel+select` 就会比较麻烦，这时就可以通过 context 来实现。
 

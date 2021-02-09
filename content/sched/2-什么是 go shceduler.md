@@ -9,7 +9,7 @@ Go 程序的执行由两层组成：Go Program，Runtime，即用户程序和运
 
 一个展现了全景式的关系如下图：
 
-![runtime overall](https://user-images.githubusercontent.com/7698088/62172655-9981cc00-b365-11e9-8912-b16b83930ad0.png)
+![runtime overall](../assets/5.png)
 
 # 为什么要 scheduler
 
@@ -39,7 +39,7 @@ Go scheduler 的目标：
 
 > For scheduling goroutines onto kernel threads.
 
-![Go scheduler goals](https://user-images.githubusercontent.com/7698088/61874535-3f26dc80-af1b-11e9-9d9c-127edf90fff9.png)
+![Go scheduler goals](../assets/6.png)
 
 Go scheduler 的核心思想是：
 
@@ -57,7 +57,7 @@ Go scheduler 的核心思想是：
 
 Go scheduler 会启动一个后台线程 sysmon，用来检测长时间（超过 10 ms）运行的 goroutine，将其调度到 global runqueues。这是一个全局的 runqueue，优先级比较低，以示惩罚。
 
-![Go scheduler limitations](https://user-images.githubusercontent.com/7698088/61874781-d55b0280-af1b-11e9-9965-da4efe53d2db.png)
+![Go scheduler limitations](../assets/7.png)
 
 ## 总览
 
@@ -65,7 +65,7 @@ Go scheduler 会启动一个后台线程 sysmon，用来检测长时间（超过
 
 下图是我使用的 mac 的硬件信息，只有 2 个核。
 
-![mac 硬件信息](https://user-images.githubusercontent.com/7698088/62016049-63680f00-b1e2-11e9-9b6f-8566fd5e3963.png)
+![mac 硬件信息](../assets/8.png)
 
 但是配上 CPU 的超线程，1 个核可以变成 2 个，所以当我在 mac 上运行下面的程序时，会打印出 4。
 
@@ -86,7 +86,7 @@ Go 程序启动后，会给每个逻辑核心分配一个 P（Logical Processor�
 
 G、P、M 都说完了，还有两个比较重要的组件没有提到： 全局可运行队列（GRQ）和本地可运行队列（LRQ）。 LRQ 存储本地（也就是具体的 P）的可运行 goroutine，GRQ 存储全局的可运行 goroutine，这些 goroutine 还没有分配到具体的 P。
 
-![GPM global review](https://user-images.githubusercontent.com/7698088/62016513-336e3b00-b1e5-11e9-8923-d5d1743a531b.png)
+![GPM global review](../assets/9.png)
 
 Go scheduler 是 Go runtime 的一部分，它内嵌在 Go 程序里，和 Go 程序一起运行。因此它运行在用户空间，在 kernel 的上一层。和 Os scheduler 抢占式调度（preemptive）不一样，Go scheduler 采用协作式调度（cooperating）。
 
@@ -106,4 +106,4 @@ Go scheduler 是 Go runtime 的一部分，它内嵌在 Go 程序里，和 Go �
 
 下面这张 GPM 全局的运行示意图见得比较多，可以留着，看完后面的系列文章之后再回头来看，还是很有感触的：
 
-![goroutine workflow](https://user-images.githubusercontent.com/7698088/62260181-a7a61a00-b443-11e9-849b-b597addeca57.png)
+![goroutine workflow](../assets/10.png)

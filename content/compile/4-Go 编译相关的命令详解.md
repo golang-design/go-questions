@@ -12,7 +12,7 @@ go
 
 就能得到和 go 相关的命令简介：
 
-![go commands](https://user-images.githubusercontent.com/7698088/60248752-e2bda680-98f5-11e9-8b3b-7deaf70a919c.png)
+![go commands](../assets/12.png)
 
 和编译相关的命令主要是：
 
@@ -59,7 +59,7 @@ usage: go build [-o output] [-i] [build flags] [packages]
 
 我们通过一个很简单的例子来演示 `go build` 命令。我用 Goland 新建了一个 `hello-world` 项目（为了展示引用自定义的包，和之前的 hello-world 程序不同），项目的结构如下：
 
-![example structure](https://user-images.githubusercontent.com/7698088/60383032-5b5f6700-9a9e-11e9-9613-03d9ba13b889.png)
+![example structure](../assets/13.png)
 
 最左边可以看到项目的结构，包含三个文件夹：bin，pkg，src。其中 src 目录下有一个 main.go，里面定义了 main 函数，是整个项目的入口，也就是前面提过的所谓的命令源码文件；src 目录下还有一个 util 目录，里面有 util.go 文件，定义了一个可以获取本机 IP 地址的函数，也就是所谓的库源码文件。
 
@@ -104,7 +104,7 @@ go build -v -x -work -o bin/hello src/main.go
 
 执行结果：
 
-![编译过程](https://user-images.githubusercontent.com/7698088/60386219-e3586780-9ac4-11e9-871f-5acfa83372d0.png)
+![编译过程](../assets/14.png)
 
 从结果来看，图中用箭头标注了本次编译过程涉及 2 个包：util，command-line-arguments。第二个包比较诡异，源码里根本就没有这个名字好吗？其实这是 `go build` 命令检测到 [packages] 处填的是一个 `.go` 文件，因此创建了一个虚拟的包：command-line-arguments。
 
@@ -112,7 +112,7 @@ go build -v -x -work -o bin/hello src/main.go
 
 另外，第一行显示了编译过程中的工作目录，此目录的文件结构是：
 
-![临时工作目录](https://user-images.githubusercontent.com/7698088/60386682-06861580-9acb-11e9-8367-d37ce03a46cc.png)
+![临时工作目录](../assets/15.png)
 
 可以看到，和 hello-world 目录的层级基本一致。command-line-arguments 就是虚拟的 main.go 文件所处的包。exe 目录下的可执行文件在最后一步被移动到了 bin 目录下，所以这里是空的。
 
@@ -128,7 +128,7 @@ go build -v -x -work -o bin/hello src/main.go
 
 顺便推荐一个浏览器插件 Octotree，在看 github 项目的时候，此插件可以在浏览器里直接展示整个项目的文件结构，非常方便：
 
-![github 插件](https://user-images.githubusercontent.com/7698088/60390988-d9f7eb00-9b16-11e9-83ec-64c3c0beb6ad.png)
+![github 插件](../assets/16.png)
 
 到这里，你一定会发现，对于 hello-wrold 文件夹下的 pkg 目录好像一直没有涉及到。
 
@@ -138,7 +138,7 @@ go build -v -x -work -o bin/hello src/main.go
 
 在项目根目录执行 `go build -i src/main.go` 后，pkg 目录里增加了 util.a 文件：
 
-![pkg](https://user-images.githubusercontent.com/7698088/60386864-84e3b700-9acd-11e9-9513-68a52ff460bb.png)
+![pkg](../assets/17.png)
 
 `darwin_amd64` 表示的是：
 
@@ -186,12 +186,12 @@ go run -x -work src/main.go
 
 -x 可以打印整个过程涉及到的命令，-work 可以看到临时的工作目录：
 
-![go run 过程](https://user-images.githubusercontent.com/7698088/60391387-ae2d3300-9b1f-11e9-9355-a8f59c2eac9b.png)
+![go run 过程](../assets/18.png)
 
 从上图中可以看到，仍然是先编译，再连接，最后直接执行，并打印出了执行结果。
 
 第一行打印的就是工作目录，最终生成的可执行文件就是放置于此：
 
-![go run 结果](https://user-images.githubusercontent.com/7698088/60391357-30692780-9b1f-11e9-8be4-48041779e293.png)
+![go run 结果](../assets/19.png)
 
 main 就是最终生成的可执行文件。

@@ -55,7 +55,7 @@ printUser goRoutine called &{Ankur 25}
 
 这里就是一个很好的 `share memory by communicating` 的例子。
 
-![output](https://user-images.githubusercontent.com/7698088/61191276-16ad1000-a6db-11e9-9729-cdea7744f002.png)
+![output](../assets/12.png)
 
 一开始构造一个结构体 u，地址是 0x56420，图中地址上方就是它的内容。接着把 `&u` 赋值给指针 `g`，g 的地址是 0x565bb0，它的内容就是一个地址，指向 u。
 

@@ -100,7 +100,7 @@ func main() {
 
 栈布局是这样的：
 
-![fn 与函数参数](https://user-images.githubusercontent.com/7698088/63561049-0cf4b300-c58b-11e9-8745-57d7dadf0a87.png)
+![fn 与函数参数](../assets/25.png)
 
 栈顶是 siz，再往上是函数的地址，再往上就是传给 hello 函数的参数，string 在这里是一个地址。因此前面代码里先 push 参数的地址，再 push 参数大小。
 
@@ -248,7 +248,7 @@ newg := gfget(_p_)
 
 如果拿不到，则会在堆上创建一个新的 G，为其分配 2KB 大小的栈，并设置好新 goroutine 的 stack 成员，设置其状态为 _Gdead，并将其添加到全局变量 allgs 中。创建完成之后，我们就在堆上有了一个 2K 大小的栈。于是，我们的图再次丰富：
 
-![创建了新的 goroutine](https://user-images.githubusercontent.com/7698088/64071207-1ecf0800-cca7-11e9-874f-a907e272581c.png)
+![创建了新的 goroutine](../assets/26.png)
 
 这样，main goroutine 就诞生了。
 

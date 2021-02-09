@@ -277,13 +277,13 @@ func main() {
 
 然后，sender 把发送元素拷贝到 sudog 的 elem 地址处，最后会调用 goready 将 G1 唤醒，状态变为 runnable。
 
-![G1 runnable](https://user-images.githubusercontent.com/7698088/61342598-4bf16380-a87d-11e9-8667-c22b02030d6b.png)
+![G1 runnable](../assets/2.png)
 
 当调度器光顾 G1 时，将 G1 变成 running 状态，执行 goroutineA 接下来的代码。G 表示其他可能有的 goroutine。
 
 这里其实涉及到一个协程写另一个协程栈的操作。有两个 receiver 在 channel 的一边虎视眈眈地等着，这时 channel 另一边来了一个 sender 准备向 channel 发送数据，为了高效，用不着通过 channel 的 buf “中转”一次，直接从源地址把数据 copy 到目的地址就可以了，效率高啊！
 
-![send direct](https://user-images.githubusercontent.com/7698088/61342620-64fa1480-a87d-11e9-8cac-eacd2f4892f8.png)
+![send direct](../assets/3.png)
 
 上图是一个示意图，`3` 会被拷贝到 G1 栈上的某个位置，也就是 val 的地址处，保存在 elem 字段。
 
