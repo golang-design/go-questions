@@ -1,0 +1,39 @@
+name: Website
+on: [push]
+jobs:
+
+  build:
+    name: Website
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.15
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.15
+      id: go
+
+    - name: Setup Hugo
+      uses: peaceiris/actions-hugo@v2
+      with:
+        hugo-version: '0.60.1'
+        extended: true
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v1
+
+    - name: Build Website
+      env:
+        USER: ${{ secrets.SERVER_USER }}
+        TARGET: ${{ secrets.SERVER_PATH }}
+        KEY: ${{ secrets.SERVER_KEY }}
+        DOMAIN: ${{ secrets.SERVER_DOMAIN }}
+      run: |
+        make
+        mkdir ~/.ssh
+        echo "$KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+        chmod 400 ~/.ssh/id_ed25519
+        eval "$(ssh-agent -s)"
+        ssh-add ~/.ssh/id_ed25519
+        ssh-keyscan -H $DOMAIN >> ~/.ssh/known_hosts
+        scp -r public/* $USER@$DOMAIN:$TARGET
