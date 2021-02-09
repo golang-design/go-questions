@@ -1,5 +1,8 @@
 name: Website
 on: [push]
+# on:
+#   push:
+#     branches: [ master ]
 jobs:
 
   build:
@@ -16,7 +19,7 @@ jobs:
     - name: Setup Hugo
       uses: peaceiris/actions-hugo@v2
       with:
-        hugo-version: '0.60.1'
+        hugo-version: '0.80.0'
         extended: true
 
     - name: Check out code into the Go module directory
