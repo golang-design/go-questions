@@ -1,7 +1,10 @@
-# Go Questions ![](https://changkun.de/urlstat?mode=github&repo=golang-design/Go-Questions)
+---
+title: Go Questions
+---
 
-- 个人博客：https://qcrao.com
-- GitBook 地址：https://qcrao91.gitbook.io/go
+# Go Questions 
+
+- 作者博客：https://qcrao.com
 - 项目网站：https://golang.design/questions
 - 本项目地址：https://github.com/golang-design/Go-Questions
 

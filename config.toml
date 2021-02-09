@@ -1,0 +1,4 @@
+baseURL = "http://golang.design/questions"
+languageCode = "zh-CN"
+title = "Go Questions"
+theme = "book"
