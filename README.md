@@ -1,8 +1,8 @@
 # Go Questions ![](https://changkun.de/urlstat?mode=github&repo=golang-design/Go-Questions)
 
 - 个人博客：https://qcrao.com
-- GitBook 地址：https://qcrao91.gitbook.io/go
 - 项目网站：https://golang.design/go-questions
+- GitBook 地址：https://qcrao91.gitbook.io/go
 - 本项目地址：https://github.com/golang-design/Go-Questions
 
 Go 语言学习入门和进阶知识。以 Go 语言为突破口，从问题切入，掌握 Go 语言、后端相关的各种硬核知识。
