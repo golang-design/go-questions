@@ -61,7 +61,8 @@ type hmap struct {
     // 指向 buckets 数组，大小为 2^B
     // 如果元素个数为0，就为 nil
 	buckets    unsafe.Pointer
-	// 扩容的时候，buckets 长度会是 oldbuckets 的两倍
+	// 等量扩容的时候，buckets 长度和 oldbuckets 相等
+	// 双倍扩容的时候，buckets 长度会是 oldbuckets 的两倍
 	oldbuckets unsafe.Pointer
 	// 指示扩容进度，小于此地址的 buckets 迁移完成
 	nevacuate  uintptr
