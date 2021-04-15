@@ -133,7 +133,7 @@ type m struct {
 	// 这里是线程本地存储
 	tls           [6]uintptr // thread-local storage (for x86 extern register)
 	mstartfn      func()
-	// 指向正在运行的 gorutine 对象
+	// 指向正在运行的 goroutine 对象
 	curg          *g       // current running goroutine
 	caughtsig     guintptr // goroutine running during fatal signal
 	// 当前工作线程绑定的 p
