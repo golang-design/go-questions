@@ -1,6 +1,6 @@
 ---
 weight: 708
-title: "主 gorutine 如何创建"
+title: "主 goroutine 如何创建"
 slug: /main-goroutine
 ---
 
