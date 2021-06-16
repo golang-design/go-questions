@@ -50,7 +50,7 @@ false
 
 接着，我通过汇编发现了如下的事实：
 
-当用 float64 作为 key 的时候，先要将其转成 unit64 类型，再插入 key 中。
+当用 float64 作为 key 的时候，先要将其转成 uint64 类型，再插入 key 中。
 
 具体是通过 `Float64frombits` 函数完成：
 
