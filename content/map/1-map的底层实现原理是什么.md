@@ -343,7 +343,7 @@ func mapaccess1(t *maptype, h *hmap, key unsafe.Pointer) unsafe.Pointer {
 		top += minTopHash
 	}
 	for {
-	    // 遍历 8 个 bucket
+	    // 遍历 bucket 的 8 个位置
 		for i := uintptr(0); i < bucketCnt; i++ {
 		    // tophash 不匹配，继续
 			if b.tophash[i] != top {
