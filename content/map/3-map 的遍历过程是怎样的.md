@@ -71,7 +71,7 @@ type hiter struct {
 	// 当前遍历到的 bmap
 	bptr        *bmap
 	overflow    [2]*[]*bmap
-	// 起始遍历的 bucet 编号
+	// 起始遍历的 bucket 编号
 	startBucket uintptr
 	// 遍历开始时 cell 的编号（每个 bucket 中有 8 个 cell）
 	offset      uint8
