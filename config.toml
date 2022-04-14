@@ -1,6 +1,6 @@
 baseURL = "http://golang.design/go-questions"
 languageCode = "zh-CN"
-title = "Go Questions"
+title = "Go 程序员面试笔试宝典"
 theme = "book"
 
 [markup.highlight]
