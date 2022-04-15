@@ -1,4 +1,4 @@
-<img src="content/assets/cover.jpg" alt="logo" height="350" align="right" style="margin: 5px; margin-bottom: 20px;" />
+<img src="content/assets/cover.png" alt="logo" height="480" align="right" style="margin: 5px; margin-bottom: 20px;" />
 
 # Go 程序员面试笔试宝典 ![](https://changkun.de/urlstat?mode=github&repo=golang-design/Go-Questions)
 
@@ -10,7 +10,7 @@ _出版社_：[机械工业出版社](http://cmpbook.com)<br/>
 
 - [京东](https://item.jd.com/13128125.html)
 - [当当](http://product.dangdang.com/29390290.html)
-- [淘宝](https://s.click.taobao.com/Nb3Q9Zu)
+- [天猫](https://s.click.taobao.com/Nb3Q9Zu)
 
 ## 关于本站
 
@@ -31,12 +31,8 @@ _出版社_：[机械工业出版社](http://cmpbook.com)<br/>
 
 ## 致谢
 
-在写作本书的过程中，我和本书的二作[欧长坤](https://changkun.de)有很多交流讨论，
-他对 Go 的理解非常深，他同时也是 Go Contributor，我们的交流和讨论让我对很多问题有了更深入的理解，
-非常感谢。我从 [Go 夜读社区](https://talkgo.org) 的分享中学到了很多东西。并且我本人也担任讲师，
-分享了多期 Go 相关的内容，很多观众都表示很有帮助。教是最好的学，我本人的收获是最多的。
-感谢 Go 夜读社区的发起者[杨文](https://maiyang.me)及 SIG 小组成员[煎鱼](https://github.com/EDDYCJY/blog)和[傲飞](https://aofei.com)。
-另外，我和 “Go 圈” 的很多博客作者也有很多交流，比如[曹大](http://xargin.com)、[Draven 大神](https://draveness.me)收获良多，在此一并感谢。这两年，我在 “码农桃花源” 发表了很多文章，得到了很多读者的肯定，这也是我能不断写作的动力，感谢你们。
+在写作本书的过程中，我和本书的二作[欧长坤](https://changkun.de)有很多交流讨论，他对 Go 的理解非常深，他同时也是 Go Contributor，我们的交流和讨论让我对很多问题有了更深入的理解，
+非常感谢。我从 [Go 夜读社区](https://talkgo.org) 的分享中学到了很多东西。并且我本人也担任讲师，分享了多期 Go 相关的内容，很多观众都表示很有帮助。教是最好的学，我本人的收获是最多的。感谢 Go 夜读社区的发起者[杨文](https://maiyang.me)及 SIG 小组成员[煎鱼](https://github.com/EDDYCJY/blog)和[傲飞](https://aofei.com)。另外，我和 “Go 圈” 的很多博客作者也有很多交流，比如[曹大](http://xargin.com)、[Draven 大神](https://draveness.me)收获良多，在此一并感谢。这两年，我在 “码农桃花源” 发表了很多文章，得到了很多读者的肯定，这也是我能不断写作的动力，感谢你们。
 
 ## 交流和勘误
 
