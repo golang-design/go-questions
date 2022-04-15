@@ -40,8 +40,7 @@ _出版社_：[机械工业出版社](http://cmpbook.com)<br/>
 读者还可以本书的 [GitHub 仓库](https://github.com/golang-design/go-questions)
 里讨论关于本书内容的问题，或报告并提交本书存在的错误。
 
-我们欢迎你在 GitHub 仓库上发起 [Issues](https://github.com/golang-design/go-questions/issues/new)
-或提交 [Pull Request](https://github.com/golang-design/go-questions/compare)。
+我们欢迎你在 GitHub 仓库上发起 [Issues](https://github.com/golang-design/go-questions/issues/new/choose) 或提交 [Pull Request](https://github.com/golang-design/go-questions/compare)。
 
 我们也欢迎你关注 “码农桃花源” 的公众号，和更多的人一起学习：
 

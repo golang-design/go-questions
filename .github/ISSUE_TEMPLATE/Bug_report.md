@@ -1,7 +1,6 @@
 ---
 name: Bug report
-about: 勘误
-
+about: 书籍勘误
 ---
 
 ## 实际描述
