@@ -6,6 +6,13 @@ title: 勘误表
 
 请直接搜索对应的页面，如“第 255 页”，查看该页面的勘误内容。
 
+## 第 76 页
+
+- IsClosed 函数返回 false
+
+<img width="1187" alt="image" src="https://user-images.githubusercontent.com/7698088/165060080-fc5d069f-35f3-4e4e-aaf9-f2c359ea65a6.png">
+
+
 ## 第 255 页
 
 - 图 13-3 标识错误，如下图
@@ -20,4 +27,4 @@ title: 勘误表
 
 
 ---
-最后更新：2022.04.22
+最后更新：2022.04.25
