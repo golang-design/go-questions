@@ -19,6 +19,10 @@ title: 勘误表
 
 <img width="1187" alt="image" src="https://user-images.githubusercontent.com/7698088/165060080-fc5d069f-35f3-4e4e-aaf9-f2c359ea65a6.png">
 
+## 第 211 页
+- 图 12-19 m0 标识错误
+
+<img width="768" alt="image" src="https://user-images.githubusercontent.com/7698088/167159386-d56ae249-b1fe-4b80-87a6-a7134031c27e.png">
 
 ## 第 255 页
 
