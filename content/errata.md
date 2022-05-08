@@ -19,6 +19,19 @@ title: 勘误表
 
 <img width="1187" alt="image" src="https://user-images.githubusercontent.com/7698088/165060080-fc5d069f-35f3-4e4e-aaf9-f2c359ea65a6.png">
 
+## 第 112 页
+
+当 n==5 时，描述有问题
+
+<img width="924" alt="image" src="https://user-images.githubusercontent.com/7698088/167293610-c62635e2-e52a-470c-b9fd-e7ca56331581.png">
+
+## 第 113 页
+
+context 包代码结构功能表格描述有问题
+
+<img width="632" alt="image" src="https://user-images.githubusercontent.com/7698088/167293763-781c293e-7a0c-4f72-b083-1356cf1e5afb.png">
+
+
 ## 第 211 页
 - 图 12-19 m0 标识错误
 
@@ -38,4 +51,4 @@ title: 勘误表
 
 
 ---
-最后更新：2022.05.06
+最后更新：2022.05.08
