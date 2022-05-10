@@ -6,6 +6,13 @@ title: 勘误表
 
 请直接搜索对应的页面，如“第 255 页”，查看该页面的勘误内容。
 
+## 第 9 页
+
+- 少了一个括号
+
+<img width="721" alt="image" src="https://user-images.githubusercontent.com/7698088/167523651-7bfd8efc-a499-4a57-b9e1-7a1a83adb1e5.png">
+
+
 ## 第 73 页
 
 - 运行结果有问题。
