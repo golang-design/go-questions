@@ -36,7 +36,7 @@ _出版社_：[机械工业出版社](http://cmpbook.com)<br/>
 
 ## 交流和勘误
 
-我们在这里维护了一份已出版内容的[勘误表](errata)，以帮助并消除读者在阅读过程中出现的困惑。
+我们在这里维护了一份已出版内容的[勘误表](https://golang.design/go-questions/errata/)，以帮助并消除读者在阅读过程中出现的困惑。
 读者还可以本书的 [GitHub 仓库](https://github.com/golang-design/go-questions)
 里讨论关于本书内容的问题，或报告并提交本书存在的错误。
 
