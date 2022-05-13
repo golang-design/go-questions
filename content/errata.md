@@ -12,6 +12,12 @@ title: 勘误表
 
 <img width="721" alt="image" src="https://user-images.githubusercontent.com/7698088/167523651-7bfd8efc-a499-4a57-b9e1-7a1a83adb1e5.png">
 
+## 第 27 页
+
+- 形参是实参的一个复制
+
+<img width="980" alt="image" src="https://user-images.githubusercontent.com/7698088/168206572-7d9a836a-6697-4e21-a8ce-99a944f3f75d.png">
+
 
 ## 第 73 页
 
@@ -58,4 +64,4 @@ title: 勘误表
 
 
 ---
-最后更新：2022.05.08
+最后更新：2022.05.13
