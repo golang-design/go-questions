@@ -25,6 +25,12 @@ title: 勘误表
 
 <img width="980" alt="image" src="https://user-images.githubusercontent.com/7698088/168206572-7d9a836a-6697-4e21-a8ce-99a944f3f75d.png">
 
+## 第 35 页
+
+- 返回 value 类型的零值
+
+<img width="946" alt="image" src="https://user-images.githubusercontent.com/7698088/168294619-a14a96a5-a61b-4169-8c53-5f205ee075f9.png">
+
 
 ## 第 73 页
 
