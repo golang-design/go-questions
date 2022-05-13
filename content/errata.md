@@ -12,6 +12,13 @@ title: 勘误表
 
 <img width="721" alt="image" src="https://user-images.githubusercontent.com/7698088/167523651-7bfd8efc-a499-4a57-b9e1-7a1a83adb1e5.png">
 
+## 第 13 页
+
+- 调用 deferproc 函数
+
+<img width="909" alt="image" src="https://user-images.githubusercontent.com/7698088/168234622-42fdb525-026d-42a8-af9e-31b92374f9ec.png">
+
+
 ## 第 27 页
 
 - 形参是实参的一个复制
