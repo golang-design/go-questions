@@ -25,6 +25,12 @@ title: 勘误表
 
 <img width="980" alt="image" src="https://user-images.githubusercontent.com/7698088/168206572-7d9a836a-6697-4e21-a8ce-99a944f3f75d.png">
 
+## 第 32 页
+
+- s/hamp/hmap
+
+<img width="909" alt="image" src="https://user-images.githubusercontent.com/5498964/168425490-826e0972-c550-4892-9a23-f64acdbd1aa4.png">
+
 ## 第 35 页
 
 - 返回 value 类型的零值
