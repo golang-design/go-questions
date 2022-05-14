@@ -117,11 +117,16 @@ printStudent GoRoutine called &{qcrao 18}
 
 <img width="632" alt="image" src="https://user-images.githubusercontent.com/5498964/168425331-2518fbb8-4b6b-4a40-ba69-b2e8e91659ac.png">
 
-
 ## 第 211 页
+
 - 图 12-19 m0 标识错误
 
 <img width="768" alt="image" src="https://user-images.githubusercontent.com/7698088/167159386-d56ae249-b1fe-4b80-87a6-a7134031c27e.png">
+
+
+## 第 240 页
+
+12.14.1 小节中，"这时和P绑定的G正在进行系统调用，无法执行其他的G" 更改为 "这时和P绑定的M正在进行系统调用，无法执行其他的G"
 
 ## 第 255 页
 
