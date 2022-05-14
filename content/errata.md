@@ -74,7 +74,3 @@ title: 勘误表
 - 表 13-1 不同等级的浪费”下方算式错误
 
 <img width="868" alt="image" src="https://user-images.githubusercontent.com/7698088/164685097-518683e5-8a8b-4f6b-9e04-5f2952d8cea9.png">
-
-
----
-最后更新：2022.05.13

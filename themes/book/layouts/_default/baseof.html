@@ -79,6 +79,12 @@
 {{ define "main" }}
   <article class="markdown">
     {{- .Content -}}
+    {{ $path := .Permalink | relURL }}
+    {{ if eq $path "/go-questions/errata/" }}
+    ---
+    <br/>
+    最后更新：{{ now.Format "2006.01.02" }}
+    {{ end }}
   </article>
 {{ end }}
 
