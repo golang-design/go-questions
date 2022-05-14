@@ -57,6 +57,12 @@ title: 勘误表
 
 <img width="632" alt="image" src="https://user-images.githubusercontent.com/7698088/167293763-781c293e-7a0c-4f72-b083-1356cf1e5afb.png">
 
+## 第 192 页
+
+- s/_Grunnale/_Grunnable
+
+<img width="632" alt="image" src="https://user-images.githubusercontent.com/5498964/168425331-2518fbb8-4b6b-4a40-ba69-b2e8e91659ac.png">
+
 
 ## 第 211 页
 - 图 12-19 m0 标识错误
