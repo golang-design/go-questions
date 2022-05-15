@@ -45,53 +45,10 @@ title: 勘误表
 
 ## 第 73 页
 
-第一段代码块为（[go play 地址](https://go.dev/play/p/SrKx07Mo7Ti)）：
+- 运行结果有问题：
 
-```go
-package main
+<img width="955" alt="image" src="https://user-images.githubusercontent.com/7698088/168478573-8e392460-b602-42d8-9aba-0d7a538f17b1.png">
 
-import (
-	"fmt"
-	"time"
-)
-
-type Student struct {
-	name string
-	age  int8
-}
-
-var s = Student{name: "qcrao", age: 18}
-var g = &s
-
-func modifyStudent(pu *Student) {
-	fmt.Println("modifyStudent Received Vaule", pu)
-	pu.name = "Stefno"
-}
-func printStudent(u <-chan *Student) {
-	time.Sleep(2 * time.Second)
-	fmt.Println("printStudent GoRoutine called", <-u)
-}
-func main() {
-	c := make(chan *Student, 5)
-	c <- g
-	fmt.Println(g)
-	// modify g
-	g = &Student{name: "Old qcrao", age: 100}
-	go printStudent(c)
-	go modifyStudent(g)
-	time.Sleep(5 * time.Second)
-	fmt.Println(g)
-}
-```
-
-运行结果为
-
-```
-&{qcrao 18}
-modifyStudent Received Vaule &{Old qcrao 100}
-printStudent GoRoutine called &{qcrao 18}
-&{Stefno 100}
-```
 
 - 图中变量标注有误：
 
