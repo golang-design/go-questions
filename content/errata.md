@@ -40,7 +40,7 @@ title: 勘误表
 
 ## 第 73 页
 
-第一段代码块为 (https://go.dev/play/p/SrKx07Mo7Ti)：
+第一段代码块为（[go play 地址](https://go.dev/play/p/SrKx07Mo7Ti)）：
 
 ```go
 package main
@@ -88,7 +88,7 @@ printStudent GoRoutine called &{qcrao 18}
 &{Stefno 100}
 ```
 
-图中变量标注有误：
+- 图中变量标注有误：
 
 <img width="822" alt="image" src="https://user-images.githubusercontent.com/5498964/168426034-165dfb6b-5142-43df-850e-063d7a18b574.png">
 
@@ -98,6 +98,13 @@ printStudent GoRoutine called &{qcrao 18}
 - IsClosed 函数返回 false
 
 <img width="1187" alt="image" src="https://user-images.githubusercontent.com/7698088/165060080-fc5d069f-35f3-4e4e-aaf9-f2c359ea65a6.png">
+
+## 第 89 页
+
+- 多余的“个”
+
+<img width="976" alt="image" src="https://user-images.githubusercontent.com/7698088/168477280-a32572ce-59ca-4bef-a4b8-dabf29c09447.png">
+
 
 ## 第 112 页
 
@@ -126,7 +133,7 @@ printStudent GoRoutine called &{qcrao 18}
 
 ## 第 240 页
 
-12.14.1 小节中，"这时和P绑定的G正在进行系统调用，无法执行其他的G" 更改为 "这时和P绑定的M正在进行系统调用，无法执行其他的G"
+- 12.14.1 小节中，"这时和P绑定的G正在进行系统调用，无法执行其他的G" 更改为 "这时和P绑定的M正在进行系统调用，无法执行其他的G"
 
 ## 第 255 页
 
