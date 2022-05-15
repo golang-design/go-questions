@@ -8,6 +8,11 @@ title: 勘误表
 
 ## 第 9 页
 
+- 多了一个逗号
+
+<img width="928" alt="image" src="https://user-images.githubusercontent.com/7698088/168478109-96352e26-48f6-4001-9a1d-4be4fb63fae8.png">
+
+
 - 少了一个括号
 
 <img width="721" alt="image" src="https://user-images.githubusercontent.com/7698088/167523651-7bfd8efc-a499-4a57-b9e1-7a1a83adb1e5.png">
