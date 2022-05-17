@@ -80,6 +80,13 @@ title: 勘误表
 
 <img width="632" alt="image" src="https://user-images.githubusercontent.com/7698088/167293763-781c293e-7a0c-4f72-b083-1356cf1e5afb.png">
 
+## 第 174 页
+
+- 图标注有误
+
+<img width="964" alt="image" src="https://user-images.githubusercontent.com/7698088/168816746-59a6683c-c6e5-4a83-951d-13ff2a25aedb.png">
+
+
 ## 第 192 页
 
 - s/_Grunnale/_Grunnable
