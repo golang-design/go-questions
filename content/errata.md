@@ -87,6 +87,21 @@ title: 勘误表
 <img width="964" alt="image" src="https://user-images.githubusercontent.com/7698088/168816746-59a6683c-c6e5-4a83-951d-13ff2a25aedb.png">
 
 
+## 第 186 页
+
+- 关于 M 的描述有误：
+
+<img width="1025" alt="image" src="https://user-images.githubusercontent.com/7698088/168823052-85522c94-5f77-4f99-bb56-c5bbb44cb679.png">
+
+上面红框内的这两段话替换为：
+
+> Go 调度循环可以看成是一个“生产-消费”的流程。
+
+> 生产端就是我们写的 go func()...语句，它会产生一个 goroutine。消费者是 M，所有的 M 都是在不断地执行调度循环：找到 runnable 的 goroutine 来运行，运行完了就去找下一个 goroutine……
+
+> P 的个数是固定的，它等于 GOMAXPROCS 个，进程启动的时候就会被全部创建出来。随着程序的运行，越来越多的 goroutine 会被创建出来。这时，M 也会随之被创建，用于执行 goroutine，M 的个数没有一定的规律，视 goroutine 情况而定。
+
+
 ## 第 192 页
 
 - s/_Grunnale/_Grunnable
