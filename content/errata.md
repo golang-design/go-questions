@@ -137,3 +137,10 @@ title: 勘误表
 
 <img width="857" alt="image" src="https://user-images.githubusercontent.com/7698088/169967864-e5531d4f-930e-45b0-b6ea-2cb52c102f12.png">
 
+## 第 306 页
+
+- 图 14-19 标识错误
+
+<img width="717" alt="image" src="https://user-images.githubusercontent.com/7698088/169996067-efecda48-35e6-4b00-8314-5266d68b849f.png">
+
+
