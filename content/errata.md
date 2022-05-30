@@ -28,7 +28,8 @@ title: 勘误表
 
 - 形参是实参的一个复制
 
-<img width="980" alt="image" src="https://user-images.githubusercontent.com/7698088/168206572-7d9a836a-6697-4e21-a8ce-99a944f3f75d.png">
+<img width="850" alt="image" src="https://user-images.githubusercontent.com/7698088/170994248-7dbb1f1d-1707-42c5-8ac6-cf532128abfe.png">
+
 
 ## 第 32 页
 
