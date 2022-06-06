@@ -115,6 +115,12 @@ title: 勘误表
 
 <img width="768" alt="image" src="https://user-images.githubusercontent.com/7698088/167159386-d56ae249-b1fe-4b80-87a6-a7134031c27e.png">
 
+# 第 235 页
+
+- notewakeup 唤醒
+
+<img width="1169" alt="image" src="https://user-images.githubusercontent.com/7698088/172192016-78934c54-8b1c-42ed-8349-64582bc0ca93.png">
+
 
 ## 第 240 页
 
