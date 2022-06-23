@@ -81,6 +81,13 @@ title: 勘误表
 
 <img width="632" alt="image" src="https://user-images.githubusercontent.com/7698088/167293763-781c293e-7a0c-4f72-b083-1356cf1e5afb.png">
 
+# 第 131 页
+
+- 去掉多余的描述
+
+<img width="1000" alt="image" src="https://user-images.githubusercontent.com/7698088/175322427-13da90eb-700a-45d9-8a20-3c15f8ae4ba5.png">
+
+
 ## 第 141 页
 
 - 有关 interface 的章节说明有误
