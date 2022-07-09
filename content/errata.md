@@ -116,6 +116,12 @@ title: 勘误表
 
 > P 的个数是固定的，它等于 GOMAXPROCS 个，进程启动的时候就会被全部创建出来。随着程序的运行，越来越多的 goroutine 会被创建出来。这时，M 也会随之被创建，用于执行 goroutine，M 的个数没有一定的规律，视 goroutine 情况而定。
 
+# 第 191 页
+
+- memory 拼写错误
+
+<img width="779" alt="image" src="https://user-images.githubusercontent.com/7698088/178105292-5737eb90-d2b0-43f5-8c1b-5558a5116aca.png">
+
 
 ## 第 192 页
 
