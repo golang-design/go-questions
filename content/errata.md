@@ -50,10 +50,59 @@ title: 勘误表
 
 ## 第 73 页
 
-- 运行结果有问题：
+- 示例代码和运行结果修正
 
-<img width="955" alt="image" src="https://user-images.githubusercontent.com/7698088/168478573-8e392460-b602-42d8-9aba-0d7a538f17b1.png">
+示例代码：
 
+```golang
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+type Student struct {
+	name string
+	age  int
+}
+
+var s = Student{name: "qcrao", age: 18}
+var g = &s
+
+func modifyUser(pu *Student) {
+	fmt.Println("modifyUser received value:", pu)
+	pu.name = "Old Old qcrao"
+	pu.age = 200
+}
+
+func printUser(u <-chan *Student) {
+	time.Sleep(2 * time.Second)
+	fmt.Println("printUser get:", <-u)
+}
+
+func main() {
+	c := make(chan *Student, 5)
+	c <- g
+	fmt.Println(g)
+	// modify g
+	g = &Student{name: "Old qcrao", age: 100}
+	go printUser(c)
+	go modifyUser(g)
+	time.Sleep(5 * time.Second)
+	fmt.Println(g)
+}
+
+```
+
+运行结果：
+
+```shell
+&{qcrao 18}
+modifyUser received value: &{Old qcrao 100}
+printUser get: &{qcrao 18}
+&{Old Old qcrao 200}
+```
 
 - 图中变量标注有误：
 
