@@ -55,13 +55,6 @@ title: 勘误表
 示例代码：
 
 ```golang
-package main
-
-import (
-	"fmt"
-	"time"
-)
-
 type Student struct {
 	name string
 	age  int
