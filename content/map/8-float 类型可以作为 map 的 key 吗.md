@@ -123,7 +123,7 @@ func main() {
 func NaN() float64 { return Float64frombits(uvnan) }
 ```
 
-uvan 的定义为：
+uvnan 的定义为：
 
 ```golang
 uvnan    = 0x7FF8000000000001

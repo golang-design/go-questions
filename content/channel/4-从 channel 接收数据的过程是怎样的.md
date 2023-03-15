@@ -223,7 +223,7 @@ func recv(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func(), skip int) {
 	} else {
 		// 缓冲型的 channel，但 buf 已满。
 		// 将循环数组 buf 队首的元素拷贝到接收数据的地址
-		// 将发送者的数据入队。实际上这时 revx 和 sendx 值相等
+		// 将发送者的数据入队。实际上这时 recvx 和 sendx 值相等
 		// 找到接收游标
 		qp := chanbuf(c, c.recvx)
 		// …………
