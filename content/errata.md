@@ -127,6 +127,13 @@ printUser get: &{qcrao 18}
 
 <img width="632" alt="image" src="https://user-images.githubusercontent.com/7698088/167293763-781c293e-7a0c-4f72-b083-1356cf1e5afb.png">
 
+## 第 122 页
+
+- 多了一个 String 方法的代码
+
+<img width="1147" alt="image" src="https://user-images.githubusercontent.com/7698088/226241857-602b4d87-ade1-4bdc-a973-9d7ece991ec6.png">
+
+
 # 第 131 页
 
 - 去掉多余的描述
