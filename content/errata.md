@@ -169,6 +169,11 @@ printUser get: &{qcrao 18}
 
 > P 的个数是固定的，它等于 GOMAXPROCS 个，进程启动的时候就会被全部创建出来。随着程序的运行，越来越多的 goroutine 会被创建出来。这时，M 也会随之被创建，用于执行 goroutine，M 的个数没有一定的规律，视 goroutine 情况而定。
 
+- 多了个“不”字
+
+<img width="1117" alt="image" src="https://user-images.githubusercontent.com/7698088/226796514-82eab03f-7214-4a4a-9584-306e01ca8072.png">
+
+
 # 第 191 页
 
 - memory 拼写错误
