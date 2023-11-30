@@ -134,11 +134,15 @@ printUser get: &{qcrao 18}
 <img width="1147" alt="image" src="https://user-images.githubusercontent.com/7698088/226241857-602b4d87-ade1-4bdc-a973-9d7ece991ec6.png">
 
 
-# 第 131 页
+## 第 131 页
 
 - 去掉多余的描述
 
 <img width="1000" alt="image" src="https://user-images.githubusercontent.com/7698088/175322427-13da90eb-700a-45d9-8a20-3c15f8ae4ba5.png">
+
+## 第 132 页
+
+- ![](https://raw.githubusercontent.com/qcrao/blog/master/pics20231130182154.png)
 
 
 ## 第 141 页
