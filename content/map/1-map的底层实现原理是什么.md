@@ -285,7 +285,7 @@ buckets 编号就是桶编号，当两个不同的 key 落在同一个桶中，�
 
 如果在 bucket 中没找到，并且 overflow 不为空，还要继续去 overflow bucket 中寻找，直到找到或是所有的 key 槽位都找遍了，包括所有的 overflow bucket。
 
-我们来看下源码吧，哈哈！通过汇编语言可以看到，查找某个 key 的底层函数是 `mapacess` 系列函数，函数的作用类似，区别在下一节会讲到。这里我们直接看 `mapacess1` 函数：
+我们来看下源码吧，哈哈！通过汇编语言可以看到，查找某个 key 的底层函数是 `mapaccess` 系列函数，函数的作用类似，区别在下一节会讲到。这里我们直接看 `mapaccess1` 函数：
 
 ```golang
 func mapaccess1(t *maptype, h *hmap, key unsafe.Pointer) unsafe.Pointer {
