@@ -66,7 +66,7 @@ unsafe 包提供了 2 点重要的能力：
 > 1. 任何类型的指针和 unsafe.Pointer 可以相互转换。
 > 2. uintptr 类型和 unsafe.Pointer 可以相互转换。
 
-![type pointer uintptr](../assets/0.png)
+![type pointer uintptr](./assets/0.png)
 
 pointer 不能直接进行数学运算，但可以把它转换成 uintptr，对 uintptr 类型进行数学运算，再转换成 pointer 类型。
 

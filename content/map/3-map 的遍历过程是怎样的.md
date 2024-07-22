@@ -52,7 +52,7 @@ go tool compile -S main.go
 
 这样，关于 map 迭代，底层的函数调用关系一目了然。先是调用 `mapiterinit` 函数初始化迭代器，然后循环调用 `mapiternext` 函数进行 map 迭代。
 
-![map iter loop](../assets/4.png)
+![map iter loop](./assets/4.png)
 
 迭代器的结构体定义：
 
@@ -113,11 +113,11 @@ it.offset = uint8(r >> h.B & (bucketCnt - 1))
 
 假设我们有下图所示的一个 map，起始时 B = 1，有两个 bucket，后来触发了扩容（这里不要深究扩容条件，只是一个设定），B 变成 2。并且， 1 号 bucket 中的内容搬迁到了新的 bucket，`1 号`裂变成 `1 号`和 `3 号`；`0 号` bucket 暂未搬迁。老的 bucket 挂在在 `*oldbuckets` 指针上面，新的 bucket 则挂在 `*buckets` 指针上面。
 
-![map origin](../assets/5.png)
+![map origin](./assets/5.png)
 
 这时，我们对此 map 进行遍历。假设经过初始化后，startBucket = 3，offset = 2。于是，遍历的起点将是 3 号 bucket 的 2 号 cell，下面这张图就是开始遍历时的状态：
 
-![map init](../assets/6.png)
+![map init](./assets/6.png)
 
 标红的表示起始位置，bucket 遍历顺序为：3 -> 0 -> 1 -> 2。
 
@@ -144,7 +144,7 @@ minTopHash = 4
 
 依次遍历 3 号 bucket 的 cell，这时候会找到第一个非空的 key：元素 e。到这里，mapiternext 函数返回，这时我们的遍历结果仅有一个元素：
 
-![iter res](../assets/7.png)
+![iter res](./assets/7.png)
 
 由于返回的 key 不为空，所以会继续调用 mapiternext 函数。
 
@@ -152,7 +152,7 @@ minTopHash = 4
 
 遍历结果集也因此壮大：
 
-![iter res](../assets/8.png)
+![iter res](./assets/8.png)
 
 新 3 号 bucket 遍历完之后，回到了新 0 号 bucket。0 号 bucket 对应老的 0 号 bucket，经检查，老 0 号 bucket 并未搬迁，因此对新 0 号 bucket 的遍历就改为遍历老 0 号 bucket。那是不是把老 0 号 bucket 中的所有 key 都取出来呢？
 
@@ -160,17 +160,17 @@ minTopHash = 4
 
 因此，`lowbits == 00` 的将进入遍历结果集：
 
-![iter res](../assets/9.png)
+![iter res](./assets/9.png)
 
 和之前的流程一样，继续遍历新 1 号 bucket，发现老 1 号 bucket 已经搬迁，只用遍历新 1 号 bucket 中现有的元素就可以了。结果集变成：
 
-![iter res](../assets/10.png)
+![iter res](./assets/10.png)
 
 继续遍历新 2 号 bucket，它来自老 0 号 bucket，因此需要在老 0 号 bucket 中那些会裂变到新 2 号 bucket 中的 key，也就是 `lowbit == 10` 的那些 key。
 
 这样，遍历结果集变成：
 
-![iter res](../assets/11.png)
+![iter res](./assets/11.png)
 
 最后，继续遍历到新 3 号 bucket 时，发现所有的 bucket 都已经遍历完毕，整个迭代过程执行完毕。
 

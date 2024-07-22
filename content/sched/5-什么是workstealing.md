@@ -10,7 +10,7 @@ Go scheduler 的职责就是将所有处于 runnable 的 goroutines 均匀分布
 
 Go scheduler 使用 M:N 模型，在任一时刻，M 个 goroutines（G） 要分配到 N 个内核线程（M），这些 M 跑在个数最多为 GOMAXPROCS 的逻辑处理器（P）上。每个 M 必须依附于一个 P，每个 P 在同一时刻只能运行一个 M。如果 P 上的 M 阻塞了，那它就需要其他的 M 来运行 P 的 LRQ 里的 goroutines。
 
-![GPM relatioship](../assets/12.png)
+![GPM relatioship](./assets/12.png)
 
 个人感觉，上面这张图比常见的那些用三角形表示 M，圆形表示 G，矩形表示 P 的那些图更生动形象。
 
@@ -31,6 +31,6 @@ runtime.schedule() {
 
 当 P2 上的一个 G 执行结束，它就会去 LRQ 获取下一个 G 来执行。如果 LRQ 已经空了，就是说本地可运行队列已经没有 G 需要执行，并且这时 GRQ 也没有 G 了。这时，P2 会随机选择一个 P（称为 P1），P2 会从 P1 的 LRQ “偷”过来一半的 G。
 
-![Work Stealing](../assets/13.png)
+![Work Stealing](./assets/13.png)
 
 这样做的好处是，有更多的 P 可以一起工作，加速执行完所有的 G。

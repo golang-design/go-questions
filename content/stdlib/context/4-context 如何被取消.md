@@ -8,7 +8,7 @@ context 包的代码并不长，`context.go` 文件总共不到 500 行，其中
 
 先看一张整体的图：
 
-![structure](../assets/3.png)
+![structure](./assets/3.png)
 
 |类型|名称|作用|
 |---|---|---|
@@ -35,7 +35,7 @@ context 包的代码并不长，`context.go` 文件总共不到 500 行，其中
 
 整体类图如下：
 
-![classes](../assets/4.png)
+![classes](./assets/4.png)
 
 # 接口
 ## Context
@@ -271,7 +271,7 @@ delete(p.children, child)
 
 在取消函数内部，我知道，我所有的子节点都会因为我的一：`c.children = nil` 而化为灰烬。我自然就没有必要再多做这一步，最后我所有的子节点都会和我断绝关系，没必要一个个做。另外，如果遍历子节点的时候，调用 child.cancel 函数传了 true，还会造成同时遍历和删除一个 map 的境地，会有问题的。
 
-![context cancel](../assets/5.png)
+![context cancel](./assets/5.png)
 
 如上左图，代表一棵 context 树。当调用左图中标红 context 的 cancel 方法后，该 context 从它的父 context 中去除掉了：实线箭头变成了虚线。且虚线圈框出来的 context 都被取消了，圈内的 context 间的父子关系都荡然无存了。
 

@@ -44,7 +44,7 @@ type itab struct {
 
 其中 `itab` 由具体类型 `_type` 以及 `interfacetype` 组成。`_type` 表示具体类型，而 `interfacetype` 则表示具体类型实现的接口类型。
 
-![iface 结构体全景](../assets/0.png)
+![iface 结构体全景](./assets/0.png)
 
 实际上，iface 描述的是非空接口，它包含方法；与之相对的是 `eface`，描述的是空接口，不包含任何方法，Go 语言里有的类型都 `“实现了”` 空接口。
 
@@ -57,7 +57,7 @@ type eface struct {
 
 相比 `iface`，`eface` 就比较简单了。只维护了一个 `_type` 字段，表示空接口所承载的具体的实体类型。`data` 描述了具体的值。
 
-![eface 结构体全景](../assets/1.png)
+![eface 结构体全景](./assets/1.png)
 
 还是用 Go 官方关于反射的博客里的例子，当然，我会用图形来详细解释，结合两者来看会更清楚。顺便提一下，搞技术的不要害怕英文资料，要想成为技术专家，读英文原始资料是技术提高的一条必经之路。
 
@@ -90,7 +90,7 @@ r = tty
 
 之后，`r = tty` 这一语句，将 `r` 的动态类型变成 `*os.File`，动态值则变成非空，表示打开的文件对象。这时，r 可以用`<value, type>`对来表示为： `<tty, *os.File>`。
 
-![r=tty](../assets/2.png)
+![r=tty](./assets/2.png)
 
 注意看上图，此时虽然 `fun` 所指向的函数只有一个 `Read` 函数，其实 `*os.File` 还包含 `Write` 函数，也就是说 `*os.File` 其实还实现了 `io.Writer` 接口。因此下面的断言语句可以执行：
 
@@ -103,7 +103,7 @@ w = r.(io.Writer)
 
 这样，w 也可以表示成 `<tty, *os.File>`，仅管它和 `r` 一样，但是 w 可调用的函数取决于它的静态类型 `io.Writer`，也就是说它只能有这样的调用形式： `w.Write()` 。`w` 的内存形式如下图：
 
-![w = r.(io.Writer)](../assets/3.png)
+![w = r.(io.Writer)](./assets/3.png)
 
 和 `r` 相比，仅仅是 `fun` 对应的函数变了：`Read -> Write`。
 
@@ -116,11 +116,11 @@ empty = w
 
 由于 `empty` 是一个空接口，因此所有的类型都实现了它，w 可以直接赋给它，不需要执行断言操作。
 
-![empty=w](../assets/4.png)
+![empty=w](./assets/4.png)
 
 从上面的三张图可以看到，interface 包含三部分信息：`_type` 是类型信息，`*data` 指向实际类型的实际值，`itab` 包含实际类型的信息，包括大小、包路径，还包含绑定在类型上的各种方法（图上没有画出方法），补充一下关于 os.File 结构体的图：
 
-![struct_type](../assets/5.png)
+![struct_type](./assets/5.png)
 
 这一节的最后，展示一个技巧：
 
@@ -487,13 +487,13 @@ func (v Value) CallSlice(in []Value) []Value
 
 另外，通过 `Type()` 方法和 `Interface()` 方法可以打通 `interface`、`Type`、`Value` 三者。Type() 方法也可以返回变量的类型信息，与 reflect.TypeOf() 函数等价。Interface() 方法可以将 Value 还原成原来的 interface。
 
-![三者关系](../assets/6.png)
+![三者关系](./assets/6.png)
 
 总结一下：`TypeOf()` 函数返回一个接口，这个接口定义了一系列方法，利用这些方法可以获取关于类型的所有信息； `ValueOf()` 函数返回一个结构体变量，包含类型信息以及实际值。
 
 用一张图来串一下：
 
-![value rtype](../assets/7.png)
+![value rtype](./assets/7.png)
 
 上图中，`rtye` 实现了 `Type` 接口，是所有类型的公共部分。emptyface 结构体和 eface 其实是一个东西，而 rtype 其实和 _type 是一个东西，只是一些字段稍微有点差别，比如 emptyface 的 word 字段和 eface 的 data 字段名称不同，但是数据型是一样的。
 

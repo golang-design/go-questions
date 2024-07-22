@@ -160,7 +160,7 @@ go build -gcflags "-N -l" -o hello src/main.go
 
 进入 gdb 调试模式，执行 `info files`，得到可执行文件的文件头，列出了各种段：
 
-![gdb info](../assets/18.png)
+![gdb info](./assets/18.png)
 
 同时，我们也得到了入口地址：0x450e20。
 
@@ -316,9 +316,9 @@ ANDQ	$~15, SP
 
 为什么要这么做？画一张图就明白了。不过先得说明一点，前面 `_rt0_amd64_linux` 函数里讲过，DI 里存的是 argc 的值，8 个字节，而 SI 里则存的是 argv 的地址，8 个字节。
 
-![SP 内存对齐]](../assets/19.png)
+![SP 内存对齐]](./assets/19.png)
 
-![SP 内存对齐](../assets/20.png)
+![SP 内存对齐](./assets/20.png)
 
 上面两张图中，左侧用箭头标注了 16 字节对齐的位置。第一步表示向下移动 39 B，第二步表示与 `~15` 相与。
 
@@ -350,7 +350,7 @@ MOVQ	SP, (g_stack+stack_hi)(DI)
 
 这部分完成之后，g0 栈空间如下图：
 
-![g0 栈空间](../assets/21.png)
+![g0 栈空间](./assets/21.png)
 
 # 主线程绑定 m0
 
@@ -459,7 +459,7 @@ g0.m = &m0
 
 于是，前面的图又增加了新的玩伴 m0：
 
-![工作线程绑定 m0，g0](../assets/22.png)
+![工作线程绑定 m0，g0](./assets/22.png)
 
 # 初始化 m0
 ```golang
@@ -640,7 +640,7 @@ atomicstorep(unsafe.Pointer(&allm), unsafe.Pointer(mp))
 
 这一行将 allm 变成 m 的地址，这样变成了一个循环链表。之后再新建 m 的时候，新 m 的 alllink 就会指向本次的 m，最后 allm 又会指向新创建的 m。
 
-![m.alllink 形成链表](../assets/23.png)
+![m.alllink 形成链表](./assets/23.png)
 
 上图中，1 将 m0 挂在 allm 上。之后，若新创建 m，则 m1 会和 m0 相连。
 
@@ -854,7 +854,7 @@ stealOrder.reset(uint32(nprocs))
 
 最后我们将 allp 和 allm 都添加到图上：
 
-![g0-p0-m0](../assets/24.png)
+![g0-p0-m0](./assets/24.png)
 
 # 参考资料
 【阿波张 goroutine 调度器初始化】https://mp.weixin.qq.com/s/W9D4Sl-6jYfcpczzdPfByQ

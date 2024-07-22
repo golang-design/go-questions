@@ -57,7 +57,7 @@ type waitq struct {
 
 例如，创建一个容量为 6 的，元素为 int 型的 channel 数据结构如下 ：
 
-![chan data structure](../assets/0.png)
+![chan data structure](./assets/0.png)
 
 # 创建
 我们知道，通道有两个方向，发送和接收。理论上来说，我们可以创建一个只发送或只接收的通道，但是这种通道创建出来后，怎么使用呢？一个只能发的通道，怎么接收呢？同样，一个只能收的通道，如何向其发送数据呢？
@@ -125,7 +125,7 @@ func makechan(t *chantype, size int64) *hchan {
 
 新建一个 chan 后，内存在堆上分配，大概长这样：
 
-![make chan](../assets/1.png)
+![make chan](./assets/1.png)
 
 # 参考资料
 

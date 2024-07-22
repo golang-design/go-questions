@@ -46,7 +46,7 @@ func WithValue(parent Context, key, val interface{}) Context {
 
 通过层层传递 context，最终形成这样一棵树：
 
-![valueCtx](../assets/2.png)
+![valueCtx](./assets/2.png)
 
 和链表有点像，只是它的方向相反：Context 指向它的父节点，链表则指向下一个节点。通过 WithValue 函数，可以创建层层的 valueCtx，存储 goroutine 间可以共享的变量。
 

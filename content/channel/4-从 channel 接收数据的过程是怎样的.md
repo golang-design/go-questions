@@ -318,13 +318,13 @@ func main() {
 
 程序第 14 行创建了一个非缓冲型的 channel，我们只看 chan 结构体中的一些重要字段，来从整体层面看一下 chan 的状态，一开始什么都没有：
 
-![unbuffered chan](../assets/4.png)
+![unbuffered chan](./assets/4.png)
 
 接着，第 15、16 行分别创建了一个 goroutine，各自执行了一个接收操作。通过前面的源码分析，我们知道，这两个 goroutine （后面称为 G1 和 G2 好了）都会被阻塞在接收操作。G1 和 G2 会挂在 channel 的 recq 队列中，形成一个双向循环链表。
 
 在程序的 17 行之前，chan 的整体数据结构如下：
 
-![chan struct at the runtime](../assets/5.png)
+![chan struct at the runtime](./assets/5.png)
 
 `buf` 指向一个长度为 0 的数组，qcount 为 0，表示 channel 中没有元素。重点关注 `recvq` 和 `sendq`，它们是 waitq 结构体，而 waitq 实际上就是一个双向链表，链表的元素是 sudog，里面包含 `g` 字段，`g` 表示一个 goroutine，所以 sudog 可以看成一个 goroutine。recvq 存储那些尝试读取 channel 但被阻塞的 goroutine，sendq 则存储那些尝试写入 channel，但被阻塞的 goroutine。
 
@@ -332,29 +332,29 @@ func main() {
 
 `recvq` 的数据结构如下：
 
-![recvq structure](../assets/6.png)
+![recvq structure](./assets/6.png)
 
 再从整体上来看一下 chan 此时的状态：
 
-![chan state](../assets/7.png)
+![chan state](./assets/7.png)
 
 G1 和 G2 被挂起了，状态是 `WAITING`。关于 goroutine 调度器这块不是今天的重点，当然后面肯定会写相关的文章。这里先简单说下，goroutine 是用户态的协程，由 Go runtime 进行管理，作为对比，内核线程由 OS 进行管理。Goroutine 更轻量，因此我们可以轻松创建数万 goroutine。
 
 一个内核线程可以管理多个 goroutine，当其中一个 goroutine 阻塞时，内核线程可以调度其他的 goroutine 来运行，内核线程本身不会阻塞。这就是通常我们说的 `M:N` 模型：
 
-![M:N scheduling](../assets/8.png)
+![M:N scheduling](./assets/8.png)
 
 `M:N` 模型通常由三部分构成：M、P、G。M 是内核线程，负责运行 goroutine；P 是 context，保存 goroutine 运行所需要的上下文，它还维护了可运行（runnable）的 goroutine 列表；G 则是待运行的 goroutine。M 和 P 是 G 运行的基础。
 
-![MGP](../assets/9.png)
+![MGP](./assets/9.png)
 
 继续回到例子。假设我们只有一个 M，当 G1（`go goroutineA(ch)`） 运行到 `val := <- a` 时，它由本来的 running 状态变成了 waiting 状态（调用了 gopark 之后的结果）：
 
-![G1 running](../assets/10.png)
+![G1 running](./assets/10.png)
 
 G1 脱离与 M 的关系，但调度器可不会让 M 闲着，所以会接着调度另一个 goroutine 来运行：
 
-![G1 waiting](../assets/11.png)
+![G1 waiting](./assets/11.png)
 
 G2 也是同样的遭遇。现在 G1 和 G2 都被挂起了，等待着一个 sender 往 channel 里发送数据，才能得到解救。
 

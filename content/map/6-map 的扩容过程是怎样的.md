@@ -370,7 +370,7 @@ evacuate 函数的代码注释非常清晰，对着代码和注释是很容易�
 
 对于条件 1，就没这么简单了。要重新计算 key 的哈希，才能决定它到底落在哪个 bucket。例如，原来 B = 5，计算出 key 的哈希后，只用看它的低 5 位，就能决定它落在哪个 bucket。扩容后，B 变成了 6，因此需要多看一位，它的低 6 位决定 key 落在哪个 bucket。这称为 `rehash`。
 
-![map rehash](../assets/12.png)
+![map rehash](./assets/12.png)
 
 因此，某个 key 在搬迁前后 bucket 序号可能和原来相等，也可能是相比原来加上 2^B（原来的 B 值），取决于 hash 值 第 6 bit 位是 0  还是 1。
 
@@ -378,7 +378,7 @@ evacuate 函数的代码注释非常清晰，对着代码和注释是很容易�
 
 例如，原始 B = 2，1号 bucket 中有 2 个 key 的哈希值低 3 位分别为：010，110。由于原来 B = 2，所以低 2 位 `10` 决定它们落在 2 号桶，现在 B 变成 3，所以 `010`、`110` 分别落入 2、6 号桶。
 
-![bucket split](../assets/13.png)
+![bucket split](./assets/13.png)
 
 理解了这个，后面讲 map 迭代的时候会用到。
 
@@ -421,14 +421,14 @@ useX = hash&newbit == 0
 
 扩容前，B = 2，共有 4 个 buckets，lowbits 表示 hash 值的低位。假设我们不关注其他 buckets 情况，专注在 2 号 bucket。并且假设 overflow 太多，触发了等量扩容（对应于前面的条件 2）。
 
-![扩容前](../assets/14.png)
+![扩容前](./assets/14.png)
 
 扩容完成后，overflow bucket 消失了，key 都集中到了一个 bucket，更为紧凑了，提高了查找的效率。
 
-![same size 扩容](../assets/15.png)
+![same size 扩容](./assets/15.png)
 
 假设触发了 2 倍的扩容，那么扩容完成后，老 buckets 中的 key 分裂到了 2 个 新的 bucket。一个在 x part，一个在 y 的 part。依据是 hash 的 lowbits。新 map 中 `0-3` 称为 x part，`4-7` 称为 y part。
 
-![2倍扩容](../assets/16.png)
+![2倍扩容](./assets/16.png)
 
 注意，上面的两张图忽略了其他 buckets 的搬迁情况，表示所有的 bucket 都搬迁完毕后的情形。实际上，我们知道，搬迁是一个“渐进”的过程，并不会一下子就全部搬迁完毕。所以在搬迁过程中，oldbuckets 指针还会指向原来老的 []bmap，并且已经搬迁完毕的 key 的 tophash 值会是一个状态值，表示 key 的搬迁去向。

@@ -91,7 +91,7 @@ TEXT runtime·gosave(SB), NOSPLIT, $0-8
 
 主要是设置了 g0.sched.sp 和 g0.sched.pc，前者指向 mstart1 函数栈上参数的位置，后者则指向 gosave 函数返回后的下一条指令。如下图：
 
-![调用 gosave 函数后](../assets/0.png)
+![调用 gosave 函数后](./assets/0.png)
 
 图中 sched.pc 并不直接指向返回地址，所以图中的虚线并没有箭头。
 
@@ -271,7 +271,7 @@ MOVQ    buf+0(FP), BX  # &gp.sched --> BX
 
 用一张流程图总结一下从 g0 切换到 main goroutine 的过程：
 
-![从 g0 到 gp](../assets/1.png)
+![从 g0 到 gp](./assets/1.png)
 
 # 参考资料
 【欧神 调度循环】https://github.com/changkun/go-under-the-hood/blob/master/book/zh-cn/part2runtime/ch06sched/exec.md

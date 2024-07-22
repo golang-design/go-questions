@@ -90,7 +90,7 @@ func main() {
 
 `main` 函数执行流程如下图：
 
-![runtime.main 启动流程](../assets/2.png)
+![runtime.main 启动流程](./assets/2.png)
 
 从流程图可知，main goroutine 执行完之后就直接调用 `exit(0)` 退出了，这会导致整个进程退出，太粗暴了。
 

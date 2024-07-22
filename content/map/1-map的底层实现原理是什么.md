@@ -96,7 +96,7 @@ type bmap struct {
 
 来一个整体的图：
 
-![hashmap bmap](../assets/0.png)
+![hashmap bmap](./assets/0.png)
 
 当 map 的 key 和 value 都不是指针，并且 size 都小于 128 字节的情况下，会把 bmap 标记为不含指针，这样可以避免 gc 时扫描整个 hmap。但是，我们看 bmap 其实有一个 overflow 的字段，是指针类型的，破坏了 bmap 不含指针的设想，这时会把 overflow 移动到 extra 字段来。
 
@@ -113,7 +113,7 @@ type mapextra struct {
 
 bmap 是存放 k-v 的地方，我们把视角拉近，仔细看 bmap 的内部组成。
 
-![bmap struct](../assets/1.png)
+![bmap struct](./assets/1.png)
 
 上图就是 bucket 的内存模型，`HOB Hash` 指的就是 top hash。 注意到 key 和 value 是各自放在一起的，并不是 `key/value/key/value/...` 这样的形式。源码里说明这样的好处是在某些情况下可以省略掉 padding 字段，节省内存空间。
 
@@ -279,7 +279,7 @@ buckets 编号就是桶编号，当两个不同的 key 落在同一个桶中，�
 
 这里参考曹大 github 博客里的一张图，原图是 ascii 图，geek 味十足，可以从参考资料找到曹大的博客，推荐大家去看看。
 
-![mapacess](../assets/2.png)
+![mapacess](./assets/2.png)
 
 上图中，假定 B = 5，所以 bucket 总数就是 2^5 = 32。首先计算出待查找 key 的哈希，使用低 5 位 `00110`，找到对应的 6 号 bucket，使用高 8 位 `10010111`，对应十进制 151，在 6 号 bucket 中寻找 tophash 值（HOB hash）为 151 的 key，找到了 2 号槽位，这样整个查找过程就结束了。
 
@@ -413,7 +413,7 @@ b = b.overflow(t)
 
 当定位到一个具体的 bucket 时，里层循环就是遍历这个 bucket 里所有的 cell，或者说所有的槽位，也就是 bucketCnt=8 个槽位。整个循环过程：
 
-![mapacess loop](../assets/3.png)
+![mapacess loop](./assets/3.png)
 
 再说一下 minTopHash，当一个 cell 的 tophash 值小于 minTopHash 时，标志这个 cell 的迁移状态。因为这个状态值是放在 tophash 数组里，为了和正常的哈希值区分开，会给 key 计算出来的哈希值一个增量：minTopHash。这样就能区分正常的 top hash 值和表示状态的哈希值。
 
