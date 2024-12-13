@@ -47,6 +47,11 @@ title: 勘误表
 
 <img width="946" alt="image" src="https://user-images.githubusercontent.com/7698088/168294619-a14a96a5-a61b-4169-8c53-5f205ee075f9.png">
 
+## 第 64 页
+
+- 图 4-3 描述有误
+
+<img width="755" alt="image" src="https://github.com/user-attachments/assets/f0050bf1-988f-4506-949b-1fb0e8d0b190" />
 
 ## 第 73 页
 
