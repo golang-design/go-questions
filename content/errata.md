@@ -7,15 +7,15 @@ title: 勘误表
 请直接搜索对应的页面，如“第 255 页”，查看该页面的勘误内容。
 
 ## 第 V 页
+
 - typo
-4.3 通道的底结构 -> 通道的`底层`结构。
+  4.3 通道的底结构 -> 通道的`底层`结构。
 
 ## 第 9 页
 
 - 多了一个逗号
 
 <img width="928" alt="image" src="https://user-images.githubusercontent.com/7698088/168478109-96352e26-48f6-4001-9a1d-4be4fb63fae8.png">
-
 
 - 少了一个括号
 
@@ -27,13 +27,11 @@ title: 勘误表
 
 <img width="909" alt="image" src="https://user-images.githubusercontent.com/7698088/168234622-42fdb525-026d-42a8-af9e-31b92374f9ec.png">
 
-
 ## 第 27 页
 
 - 形参是实参的一个复制
 
 <img width="850" alt="image" src="https://user-images.githubusercontent.com/7698088/170994248-7dbb1f1d-1707-42c5-8ac6-cf532128abfe.png">
-
 
 ## 第 32 页
 
@@ -106,7 +104,6 @@ printUser get: &{qcrao 18}
 
 <img width="822" alt="image" src="https://user-images.githubusercontent.com/5498964/168426034-165dfb6b-5142-43df-850e-063d7a18b574.png">
 
-
 ## 第 76 页
 
 - IsClosed 函数返回 false
@@ -118,7 +115,6 @@ printUser get: &{qcrao 18}
 - 多余的“个”
 
 <img width="976" alt="image" src="https://user-images.githubusercontent.com/7698088/168477280-a32572ce-59ca-4bef-a4b8-dabf29c09447.png">
-
 
 ## 第 112 页
 
@@ -132,12 +128,15 @@ printUser get: &{qcrao 18}
 
 <img width="632" alt="image" src="https://user-images.githubusercontent.com/7698088/167293763-781c293e-7a0c-4f72-b083-1356cf1e5afb.png">
 
+## 第 117 页
+
+<img width="836" alt="image" src="https://github.com/user-attachments/assets/52e4cc4f-4978-4b42-8cdc-71727de35700" />
+
 ## 第 122 页
 
 - 多了一个 String 方法的代码
 
 <img width="1147" alt="image" src="https://user-images.githubusercontent.com/7698088/226241857-602b4d87-ade1-4bdc-a973-9d7ece991ec6.png">
-
 
 ## 第 131 页
 
@@ -149,20 +148,17 @@ printUser get: &{qcrao 18}
 
 - ![](https://raw.githubusercontent.com/qcrao/blog/master/pics20231130182154.png)
 
-
 ## 第 141 页
 
 - 有关 interface 的章节说明有误
 
 <img width="744" alt="image" src="https://user-images.githubusercontent.com/7698088/174421449-8e81b69d-95db-4472-9c6b-e5bb7f1a11a5.png">
 
-
 ## 第 174 页
 
 - 图标注有误
 
 <img width="964" alt="image" src="https://user-images.githubusercontent.com/7698088/168816746-59a6683c-c6e5-4a83-951d-13ff2a25aedb.png">
-
 
 ## 第 186 页
 
@@ -182,17 +178,15 @@ printUser get: &{qcrao 18}
 
 <img width="1117" alt="image" src="https://user-images.githubusercontent.com/7698088/226796514-82eab03f-7214-4a4a-9584-306e01ca8072.png">
 
-
-# 第 191 页
+## 第 191 页
 
 - memory 拼写错误
 
 <img width="779" alt="image" src="https://user-images.githubusercontent.com/7698088/178105292-5737eb90-d2b0-43f5-8c1b-5558a5116aca.png">
 
-
 ## 第 192 页
 
-- s/_Grunnale/_Grunnable
+- s/\_Grunnale/\_Grunnable
 
 <img width="632" alt="image" src="https://user-images.githubusercontent.com/5498964/168425331-2518fbb8-4b6b-4a40-ba69-b2e8e91659ac.png">
 
@@ -202,16 +196,15 @@ printUser get: &{qcrao 18}
 
 <img width="768" alt="image" src="https://user-images.githubusercontent.com/7698088/167159386-d56ae249-b1fe-4b80-87a6-a7134031c27e.png">
 
-# 第 235 页
+## 第 235 页
 
 - notewakeup 唤醒
 
 <img width="1169" alt="image" src="https://user-images.githubusercontent.com/7698088/172192016-78934c54-8b1c-42ed-8349-64582bc0ca93.png">
 
-
 ## 第 240 页
 
-- 12.14.1 小节中，"这时和P绑定的G正在进行系统调用，无法执行其他的G" 更改为 "这时和P绑定的M正在进行系统调用，无法执行其他的G"
+- 12.14.1 小节中，"这时和 P 绑定的 G 正在进行系统调用，无法执行其他的 G" 更改为 "这时和 P 绑定的 M 正在进行系统调用，无法执行其他的 G"
 
 ## 第 255 页
 
@@ -236,5 +229,3 @@ printUser get: &{qcrao 18}
 - 图 14-19 标识错误
 
 <img width="717" alt="image" src="https://user-images.githubusercontent.com/7698088/169996067-efecda48-35e6-4b00-8314-5266d68b849f.png">
-
-
