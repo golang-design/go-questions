@@ -184,13 +184,23 @@ func makemap(t *maptype, hint int64, h *hmap, bucket unsafe.Pointer) *hmap {
 
 【引申1】slice 和 map 分别作为函数参数时有什么区别？
 
-注意，这个函数返回的结果：`*hmap`，它是一个指针，而我们之前讲过的 `makeslice` 函数返回的是 `Slice` 结构体：
+注意，这个函数返回的结果：`*hmap`，它是一个指针。
+
+而我们之前讲过的 `makeslice` 函数，在早期版本（Go 1.11 及之前）返回的是 `slice` 结构体：
 
 ```golang
+// Go 1.11 及之前
 func makeslice(et *_type, len, cap int) slice
 ```
 
-回顾一下 slice 的结构体定义：
+从 Go 1.12 开始，`makeslice` 改为只返回指向底层数组的 `unsafe.Pointer`，slice 头部（指针、长度、容量）改由编译器在调用处构造：
+
+```golang
+// Go 1.12 及之后
+func makeslice(et *_type, len, cap int) unsafe.Pointer
+```
+
+不过，无论 `makeslice` 的返回值如何变化，下面要讨论的关键区别始终成立：slice 作为函数参数传递时，传递的都是 slice 的结构体（即 slice 头部），它是值传递。回顾一下 slice 的结构体定义：
 
 ```golang
 // runtime/slice.go
