@@ -309,7 +309,7 @@ func mapaccess1(t *maptype, h *hmap, key unsafe.Pointer) unsafe.Pointer {
 	
 	// 比如 B=5，那 m 就是31，二进制是全 1
 	// 求 bucket num 时，将 hash 与 m 相与，
-	// 达到 bucket num 由 hash 的低 8 位决定的效果
+	// 达到 bucket num 由 hash 的低 5 位决定的效果
 	m := uintptr(1)<<h.B - 1
 	
 	// b 就是 bucket 的地址
