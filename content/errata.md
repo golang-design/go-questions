@@ -194,6 +194,10 @@ printUser get: &{qcrao 18}
 
 <img width="632" alt="image" src="https://user-images.githubusercontent.com/5498964/168425331-2518fbb8-4b6b-4a40-ba69-b2e8e91659ac.png">
 
+## 第 201 页
+
+- typo：图中“BX 存器里面现在放的是当前 g 结构体对象的地址”应为“BX `寄`存器”，漏了一个“寄”字。
+
 ## 第 211 页
 
 - 图 12-19 m0 标识错误
