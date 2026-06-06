@@ -1,5 +1,5 @@
 <div class="flex flex-wrap justify-between">
-{{ if .Site.IsMultiLingual }}
+{{ if gt (len .Site.Languages) 1 }}
   {{ partial "docs/languages" . }}
 {{ end }}
 
