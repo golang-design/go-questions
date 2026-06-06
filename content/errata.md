@@ -218,6 +218,10 @@ printUser get: &{qcrao 18}
 
 <img width="868" alt="image" src="https://user-images.githubusercontent.com/7698088/164685097-518683e5-8a8b-4f6b-9e04-5f2952d8cea9.png">
 
+## 第 288 页
+
+- `A.ref1 = nil` 描述有误：根据图示 `A.ref1 = B`，应为“移除灰色对象 A 对白色对象 B 的引用（ref1）”，原文误写为（ref2）。
+
 ## 第 298 页
 
 - GC 时间降到 300us
