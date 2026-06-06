@@ -222,6 +222,10 @@ printUser get: &{qcrao 18}
 
 - `A.ref1 = nil` 描述有误：根据图示 `A.ref1 = B`，应为“移除灰色对象 A 对白色对象 B 的引用（ref1）”，原文误写为（ref2）。
 
+## 第 292 页
+
+- 步调算法下界描述有误：从 Go 1.14 开始 $h_t$ 增加的下界应为 $0.6 \rho$（即 `0.6 * gcpercent/100`），与上界 $0.95 \rho$ 同样按 $\rho$ 缩放，原文写作“下界 0.6”。在默认 GOGC=100（$\rho=1$）时下界数值恰为 0.6。参见 go1.14 `runtime/mgc.go` 中 `gcSetTriggerRatio` 的 `minTriggerRatio := 0.6 * scalingFactor`。
+
 ## 第 298 页
 
 - GC 时间降到 300us
