@@ -27,6 +27,10 @@ title: 勘误表
 
 <img width="909" alt="image" src="https://user-images.githubusercontent.com/7698088/168234622-42fdb525-026d-42a8-af9e-31b92374f9ec.png">
 
+## 第 22 页
+
+- 3.1.2 节，“再次向 S2 追加元素 200”一句下方的代码应为 `s2 = append(s2, 200)`，原文误写为 `s2 = append(s2, 100)`。（本站在线版已是正确的 `200`。）
+
 ## 第 27 页
 
 - 形参是实参的一个复制
