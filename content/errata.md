@@ -222,6 +222,10 @@ printUser get: &{qcrao 18}
 
 <img width="868" alt="image" src="https://user-images.githubusercontent.com/7698088/164685097-518683e5-8a8b-4f6b-9e04-5f2952d8cea9.png">
 
+## 第 279 页
+
+- 该页最后引用的 Go 仓库 Issue 编号有误，应为 [golang/go#42430](https://go.dev/issue/42430)，原文误写为 #43430。
+
 ## 第 288 页
 
 - `A.ref1 = nil` 描述有误：根据图示 `A.ref1 = B`，应为“移除灰色对象 A 对白色对象 B 的引用（ref1）”，原文误写为（ref2）。
