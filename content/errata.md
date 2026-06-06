@@ -152,6 +152,12 @@ printUser get: &{qcrao 18}
 
 - ![](https://raw.githubusercontent.com/qcrao/blog/master/pics20231130182154.png)
 
+- `errors.As` 与 `errors.Is` 的描述有误（二者不要混淆）：
+  - `errors.Is(err, target)`：沿错误链判断是否存在与 **目标值** `target` 相等（或其 `Is` 方法返回 `true`）的错误，用于与哨兵错误（sentinel error）做比较。
+  - `errors.As(err, target)`：沿错误链找到第一个可以赋值给 `target` 所指向 **类型** 的错误，并把它赋值给 `target`（`target` 必须是非空指针）。它匹配的是类型，而不是值。
+
+  因此原文“As 从 err 错误链里找到第一个和 target 相等的值并设置为 target”描述的其实是 `Is` 的“按值比较”语义；`As` 应描述为“按类型匹配并赋值”。
+
 ## 第 141 页
 
 - 有关 interface 的章节说明有误
